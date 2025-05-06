@@ -1,17 +1,39 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { FaBed, FaUtensils, FaBath, FaStore, FaWarehouse } from "react-icons/fa";
 import { MdCloseFullscreen, MdFullscreen } from "react-icons/md";
 
 const environments = [
-  { icon: <FaBed />, label: "bedroom", image: "/Images/react-project.png" },
-  { icon: <FaUtensils />, label: "dining", image: "/envs/dining.jpg" },
-  { icon: <FaWarehouse />, label: "kitchen", image: "/envs/kitchen.jpg" },
-  { icon: <FaBath />, label: "bathroom", image: "/envs/bathroom.jpg" },
-  { icon: <FaStore />, label: "store", image: "/envs/store.jpg" },
+  {
+    icon: <FaBed />,
+    label: "bedroom",
+    image: "/Images/bedroomjpg.png",
+  },
+  {
+    icon: <FaUtensils />,
+    label: "dining",
+    image: "/Images/livingjpg.png",
+  },
+  {
+    icon: <FaWarehouse />,
+    label: "kitchen",
+    image: "/Images/kitchen.png",
+  },
+  {
+    icon: <FaBath />,
+    label: "bathroom",
+    image: "/Images/env/bathroom.png",
+  },
+  {
+    icon: <FaStore />,
+    label: "store",
+    image: "/Images/commercial_old.png",
+  },
 ];
 
 const groutColors = ["#ffffff", "#cccccc", "#333333"];
 const thicknessLevels = ["none", "thin", "thick"];
+const tileShapes = ["rectangle", "hexagon"];
+const backgroundColors = ["transparent", "#ffffff", "#f0f0f0", "#333333"];
 
 const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
   const [activeEnv, setActiveEnv] = useState("bedroom");
@@ -19,71 +41,19 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
   const [thickness, setThickness] = useState("thin");
   const [tileColor, setTileColor] = useState(selectedColor || "#16A34A");
   const [isExpanded, setIsExpanded] = useState(false);
-  const canvasRef = useRef(null);
-  
-  // Calculate tile size based on selected size
-  const getTileSize = () => {
-    switch(selectedSize) {
-      case "8x8": return 40;
-      case "12x12": return 30;
-      default: return 50;
-    }
-  };
-  
-  const tileSize = getTileSize();
-  const rows = 6;
-  const cols = 6;
+  const [selectedShape, setSelectedShape] = useState("rectangle");
+  const [backgroundColor, setBackgroundColor] = useState("transparent");
+  const [overlayColor, setOverlayColor] = useState("transparent");
 
-  // Update tile color when selected color changes
+  // Fallback tile image if not passed from parent
+  const defaultTile = { image: "/Images/tiles.jpg" };
+  const currentTile = selectedTile?.image ? selectedTile : defaultTile;
+
   useEffect(() => {
     if (selectedColor) {
       setTileColor(selectedColor);
     }
   }, [selectedColor]);
-
-  // Draw tile canvas on change
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    canvas.width = cols * tileSize;
-    canvas.height = rows * tileSize;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw background image if selected tile has one
-    if (selectedTile?.img) {
-      const img = new Image();
-      img.src = selectedTile.img;
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        // Draw color overlay after image loads
-        drawColorOverlay(ctx);
-      };
-    } else {
-      // If no image, just draw the color overlay
-      drawColorOverlay(ctx);
-    }
-  }, [tileColor, groutColor, thickness, selectedTile, tileSize]);
-
-  const drawColorOverlay = (ctx) => {
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        ctx.fillStyle = tileColor;
-        ctx.globalAlpha = 0.7; // Make color overlay semi-transparent
-        ctx.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
-        ctx.globalAlpha = 1.0;
-
-        if (thickness !== "none") {
-          ctx.strokeStyle = groutColor;
-          ctx.lineWidth = thickness === "thin" ? 1 : 3;
-          ctx.strokeRect(col * tileSize, row * tileSize, tileSize, tileSize);
-        }
-      }
-    }
-  };
 
   const currentEnv = environments.find((env) => env.label === activeEnv);
 
@@ -93,16 +63,42 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
       <hr className="mb-4" />
 
       <div className="relative mb-6">
-        <img
-          src={currentEnv.image}
-          alt="Room preview"
-          className={`w-full object-cover rounded shadow ${isExpanded ? "h-full" : ""}`}
-        />
-        <canvas
-          ref={canvasRef}
-          className={`absolute top-0 left-0 w-full h-full opacity-70 pointer-events-none ${isExpanded ? "h-full" : ""}`}
-        />
-        
+        <div
+          className={`w-full rounded shadow ${isExpanded ? "h-full" : ""}`}
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            backgroundColor: backgroundColor !== "transparent" ? backgroundColor : "transparent",
+          }}
+        >
+          {/* Tile pattern background */}
+          <div 
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: `url(${currentTile.image})`,
+              backgroundSize: `${selectedSize || 100}% ${selectedSize || 100}%`,
+              backgroundRepeat: 'no-repeat',
+              opacity: overlayColor !== "transparent" ? 0.7 : 1
+            }}
+          />
+          
+          {/* Environment image overlay */}
+          <img
+            src={currentEnv.image}
+            alt="Room preview"
+            className="w-full h-full object-cover"
+            style={{
+              position: 'relative',
+              mixBlendMode: overlayColor !== "transparent" ? "multiply" : "normal",
+              backgroundColor: overlayColor,
+            }}
+          />
+        </div>
+
         <button
           className="absolute top-2 right-2 text-white bg-black p-1 rounded"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -112,6 +108,7 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
+        {/* Environment Select */}
         <div>
           <div className="text-sm font-medium mb-2 tracking-wider">CHOOSE ENVIRONMENT:</div>
           <div className="flex items-center gap-4 flex-wrap">
@@ -138,6 +135,42 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
             onChange={(e) => setTileColor(e.target.value)}
             className="w-24 h-10 p-0 border"
           />
+        </div>
+
+        {/* Background Color */}
+        <div>
+          <div className="text-sm font-medium mb-2 tracking-wider">BACKGROUND COLOR:</div>
+          <div className="flex gap-2">
+            {backgroundColors.map((color, index) => (
+              <button
+                key={index}
+                onClick={() => setBackgroundColor(color)}
+                className={`border px-3 py-1 uppercase text-xs tracking-wide ${
+                  backgroundColor === color ? "bg-black text-white" : "bg-white text-black"
+                }`}
+                style={color !== "transparent" ? { backgroundColor: color } : {}}
+              >
+                {color === "transparent" ? "none" : ""}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Overlay Color */}
+        <div>
+          <div className="text-sm font-medium mb-2 tracking-wider">OVERLAY EFFECT:</div>
+          <input
+            type="color"
+            value={overlayColor}
+            onChange={(e) => setOverlayColor(e.target.value)}
+            className="w-24 h-10 p-0 border"
+          />
+          <button 
+            className="ml-2 border px-2 py-1 text-xs uppercase"
+            onClick={() => setOverlayColor("transparent")}
+          >
+            Clear
+          </button>
         </div>
 
         {/* Grout Color */}
@@ -170,6 +203,24 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
                 }`}
               >
                 {level}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tile Shape */}
+        <div>
+          <div className="text-sm font-medium mb-2 tracking-wider">TILE SHAPE:</div>
+          <div className="flex gap-2">
+            {tileShapes.map((shape) => (
+              <button
+                key={shape}
+                onClick={() => setSelectedShape(shape)}
+                className={`border px-3 py-1 uppercase text-xs tracking-wide ${
+                  selectedShape === shape ? "bg-black text-white" : "bg-white text-black"
+                }`}
+              >
+                {shape}
               </button>
             ))}
           </div>
