@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaRegSquare, FaTh } from "react-icons/fa";
 
-// Predefined colors and colors already in use
 const colorsUsed = ['#d1a954', '#e9e0d1', '#a8a29e'];
 const allSwatches = [
   '#f0eae2', '#e6d3b3', '#c1b2a3', '#b3a68a', '#e5d5c3',
@@ -16,21 +15,46 @@ const allSwatches = [
 ];
 
 const ColorEditor = ({ selectedTile, onColorChange, onSizeChange }) => {
-  // State to manage colors used
-  const [colorsUsedState, setColorsUsedState] = useState(colorsUsed);
+  const [colorsUsedState, setColorsUsedState] = useState(() => {
+    const savedColors = localStorage.getItem('colorsUsed');
+    return savedColors ? JSON.parse(savedColors) : colorsUsed;
+  });
+  
   const [hoveredColor, setHoveredColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState("8x8");
+  
+  const [selectedColor, setSelectedColor] = useState(() => {
+    const savedColor = localStorage.getItem('selectedColor');
+    return savedColor || colorsUsed[0];
+  });
+  
+  const [selectedSize, setSelectedSize] = useState(() => {
+    const savedSize = localStorage.getItem('selectedSize');
+    return savedSize || "8x8";
+  });
 
-  // Update colors when a new tile is selected
+  // Save to localStorage whenever these states change
+  useEffect(() => {
+    localStorage.setItem('colorsUsed', JSON.stringify(colorsUsedState));
+  }, [colorsUsedState]);
+
+  useEffect(() => {
+    localStorage.setItem('selectedColor', selectedColor);
+  }, [selectedColor]);
+
+  useEffect(() => {
+    localStorage.setItem('selectedSize', selectedSize);
+  }, [selectedSize]);
+
   useEffect(() => {
     if (selectedTile?.colorsUsed) {
       setColorsUsedState(selectedTile.colorsUsed);
-      // Set initial color to the first color of the tile
       if (selectedTile.colorsUsed.length > 0) {
-        onColorChange?.(selectedTile.colorsUsed[0]);
+        const initialColor = selectedTile.colorsUsed[0];
+        setSelectedColor(initialColor);
+        onColorChange?.(initialColor);
       }
     }
-  }, [selectedTile]);
+  }, [selectedTile, onColorChange]);
 
   const handleSizeClick = (size) => {
     setSelectedSize(size);
@@ -38,10 +62,10 @@ const ColorEditor = ({ selectedTile, onColorChange, onSizeChange }) => {
   };
 
   const handleColorSelect = (color) => {
-    // Add the selected color to the colorsUsed list if it's not already there
     if (!colorsUsedState.includes(color)) {
       setColorsUsedState([...colorsUsedState, color]);
     }
+    setSelectedColor(color);
     onColorChange?.(color);
   };
 
@@ -52,8 +76,7 @@ const ColorEditor = ({ selectedTile, onColorChange, onSizeChange }) => {
 
   const handleColorLeave = () => {
     setHoveredColor(null);
-    // Revert to the last selected color or default
-    onColorChange?.(colorsUsedState[0] || '#d1a954');
+    onColorChange?.(selectedColor); // Return to selected color when hover ends
   };
 
   return (
@@ -63,20 +86,26 @@ const ColorEditor = ({ selectedTile, onColorChange, onSizeChange }) => {
       </h2>
       <hr className="mb-4" />
 
-      {/* Tile Preview */}
-      <div className="grid grid-cols-2 gap-0 max-w-lg">
+      {/* Tile Preview with Hover Effect */}
+      <div className="grid grid-cols-2 gap-0 max-w-[300px] h-[300px] m-auto ">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="  border-2 border-[#d1a954] overflow-hidden">
+          <div
+            key={i}
+            className="border-2 border-[#d1a954] overflow-hidden relative"
+            style={{
+              backgroundColor: hoveredColor || selectedColor, // Use hovered color or selected color
+            }}
+          >
             <img
               src={selectedTile?.img}
               alt={selectedTile?.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         ))}
       </div>
 
-      <button className=" mt-5 bg-black text-white  py-2 px-10 mb-6 hover:bg-gray-800 transition">
+      <button className="mt-5 bg-black text-white py-2 px-10 mb-6 hover:bg-gray-800 transition">
         + ADD BORDERS
       </button>
 
@@ -86,11 +115,15 @@ const ColorEditor = ({ selectedTile, onColorChange, onSizeChange }) => {
           <div className="mb-2 font-semibold">COLORS USED:</div>
           <div className="flex gap-2 mb-4">
             {colorsUsedState.map((color, i) => (
-              <div 
-                key={i} 
-                className="w-6 h-6 rounded border cursor-pointer hover:scale-110 transition"
+              <div
+                key={i}
+                className={`w-6 h-6 rounded border cursor-pointer hover:scale-110 transition ${
+                  selectedColor === color ? "ring-2 ring-black" : ""
+                }`}
                 style={{ backgroundColor: color }}
                 onClick={() => handleColorSelect(color)}
+                onMouseEnter={() => handleColorHover(color)}
+                onMouseLeave={handleColorLeave}
               />
             ))}
           </div>
@@ -100,17 +133,13 @@ const ColorEditor = ({ selectedTile, onColorChange, onSizeChange }) => {
         <div className="">
           <div className="flex justify-end items-end gap-0">
             <button
-              className={`text-black px-4 py-2 rounded transition ${
-                selectedSize === "8x8" ? "bg-gray-300" : "hover:bg-gray-300"
-              }`}
+              className={`text-black px-4 py-2 rounded transition ${selectedSize === "8x8" ? "bg-gray-300" : "hover:bg-gray-300"}`}
               onClick={() => handleSizeClick("8x8")}
             >
               <FaRegSquare className="inline mr-2" /> 8x8
             </button>
             <button
-              className={`text-black px-4 py-2 rounded transition ${
-                selectedSize === "12x12" ? "bg-gray-300" : "hover:bg-gray-300"
-              }`}
+              className={`text-black px-4 py-2 rounded transition ${selectedSize === "12x12" ? "bg-gray-300" : "hover:bg-gray-300"}`}
               onClick={() => handleSizeClick("12x12")}
             >
               <FaTh className="inline mr-2" /> 12x12
@@ -119,7 +148,8 @@ const ColorEditor = ({ selectedTile, onColorChange, onSizeChange }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
+      {/* Color Palette Swatches */}
+      <div className="grid grid-cols-6 gap-x-0 gap-y-2 mt-2">
         {allSwatches.map((color, i) => (
           <div
             key={i}
