@@ -46,8 +46,8 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
   const [overlayColor, setOverlayColor] = useState("transparent");
 
   // Fallback tile image if not passed from parent
-  const defaultTile = { image: "/Images/tiles.jpg" };
-  const currentTile = selectedTile?.image ? selectedTile : defaultTile;
+  const defaultTile = { img: "/Images/tiles.jpg" };
+  const currentTile = selectedTile?.img ? selectedTile : defaultTile;
 
   useEffect(() => {
     if (selectedColor) {
@@ -56,6 +56,26 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
   }, [selectedColor]);
 
   const currentEnv = environments.find((env) => env.label === activeEnv);
+
+  // Helper to map selectedSize to pixel values
+  const sizeToPx = {
+    '8x8': '80px 80px',
+    '12x12': '120px 120px',
+    '16x16': '160px 160px',
+    // Add more mappings as needed
+  };
+  const tileBgSize = sizeToPx[selectedSize] || '100px 100px';
+
+  // Helper to map thickness to pixel value
+  const thicknessToPx = {
+    'none': '0px',
+    'thin': '2px',
+    'thick': '6px',
+  };
+  const groutThicknessPx = thicknessToPx[thickness] || '2px';
+
+  // Extract tile size in px (assume square for simplicity)
+  const tileSizePx = (tileBgSize.split(' ')[0] || '100px');
 
   return (
     <div className={`max-w-4xl mx-auto p-4 ${isExpanded ? "h-screen" : ""}`}>
@@ -72,19 +92,60 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
           }}
         >
           {/* Tile pattern background */}
-          <div 
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundImage: `url(${currentTile.image})`,
-              backgroundSize: `${selectedSize || 100}% ${selectedSize || 100}%`,
-              backgroundRepeat: 'no-repeat',
-              opacity: overlayColor !== "transparent" ? 0.7 : 1
-            }}
-          />
+          {selectedTile?.img && (
+            <>
+              {/* Tile pattern background */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundImage: `url(${currentTile.img})`,
+                  backgroundSize: tileBgSize,
+                  backgroundRepeat: 'repeat',
+                  backgroundPosition: 'center',
+                  opacity: overlayColor !== "transparent" ? 0.7 : 1,
+                  zIndex: 1
+                }}
+              />
+              {/* Grout lines overlay */}
+              {thickness !== 'none' && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    pointerEvents: 'none',
+                    zIndex: 2,
+                    backgroundImage: `
+                      repeating-linear-gradient(
+                        to right,
+                        ${groutColor},
+                        ${groutColor} ${groutThicknessPx},
+                        transparent ${groutThicknessPx},
+                        transparent ${tileSizePx}
+                      ),
+                      repeating-linear-gradient(
+                        to bottom,
+                        ${groutColor},
+                        ${groutColor} ${groutThicknessPx},
+                        transparent ${groutThicknessPx},
+                        transparent ${tileSizePx}
+                      )
+                    `,
+                    backgroundSize: tileBgSize,
+                    backgroundRepeat: 'repeat',
+                    backgroundPosition: 'center',
+                    opacity: 1,
+                  }}
+                />
+              )}
+            </>
+          )}
           
           {/* Environment image overlay */}
           <img
@@ -95,6 +156,7 @@ const TileCanvasView = ({ selectedTile, selectedColor, selectedSize }) => {
               position: 'relative',
               mixBlendMode: overlayColor !== "transparent" ? "multiply" : "normal",
               backgroundColor: overlayColor,
+              zIndex: 2
             }}
           />
         </div>
