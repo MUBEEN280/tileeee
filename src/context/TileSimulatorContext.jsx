@@ -12,7 +12,13 @@ const tileCollections = {
       shape: 'square',
       grout: 'cross',
       scale: 1,
-      colorsUsed: ['#2D3748', '#E2E8F0', '#A0AEC0', '#4A5568', '#2D3748'],
+      colorsUsed: [
+        '#2D3748', // dark gray
+        '#E2E8F0', // light gray
+        '#A0AEC0', // blue gray
+        '#4A5568', // slate
+        '#FFB300'  // orange (new, unique)
+      ],
       masks: [
         {
           id: 'mask1',
@@ -20,7 +26,7 @@ const tileCollections = {
           image: '/Images/tiles/masks/Mask-1.png',
           color: '#2D3748',
           availableColors: [
-            '#2D3748', '#1A202C', '#171923', '#2D3748', '#4A5568', '#718096','#FF0000'
+            '#2D3748', '#1A202C', '#171923', '#4A5568', '#718096', '#FF0000', '#FFB300', '#00B894', '#00BFFF', '#FFD700', '#FFFFFF', '#000000'
           ]
         },
         {
@@ -29,34 +35,34 @@ const tileCollections = {
           image: '/Images/tiles/masks/Mask-2.png',
           color: '#E2E8F0',
           availableColors: [
-            '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096', '#4A5568', '#2D3748'
+            '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096', '#4A5568', '#2D3748', '#FFB300', '#00B894', '#00BFFF', '#FFD700', '#FFFFFF', '#000000'
           ]
         },
         {
           id: 'mask3',
           name: 'Mask Pattern 3',
           image: '/Images/tiles/masks/Mask-3.png',
-          color: '#E2E8F0',
+          color: '#A0AEC0',
           availableColors: [
-            '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096', '#4A5568', '#2D3748'
+            '#A0AEC0', '#CBD5E0', '#E2E8F0', '#718096', '#4A5568', '#2D3748', '#FFB300', '#00B894', '#00BFFF', '#FFD700', '#FFFFFF', '#000000'
           ]
         },
         {
           id: 'mask4',
           name: 'Mask Pattern 4',
           image: '/Images/tiles/masks/Mask-4.png',
-          color: '#E2E8F0',
+          color: '#4A5568',
           availableColors: [
-            '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096', '#4A5568', '#2D3748'
+            '#4A5568', '#718096', '#A0AEC0', '#E2E8F0', '#2D3748', '#FFB300', '#00B894', '#00BFFF', '#FFD700', '#FFFFFF', '#000000'
           ]
         },
         {
           id: 'mask5',
           name: 'Mask Pattern 5',
           image: '/Images/tiles/masks/Mask-5.png',
-          color: '#E2E8F0',
+          color: '#FFB300',
           availableColors: [
-            '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096', '#4A5568', '#2D3748'
+            '#FFB300', '#FFD700', '#FF0000', '#00B894', '#00BFFF', '#FFFFFF', '#000000', '#2D3748', '#E2E8F0', '#A0AEC0', '#4A5568', '#718096'
           ]
         },
       ]
