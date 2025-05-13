@@ -16,7 +16,7 @@ const ColorEditor = ({ tile }) => {
   const allAvailableColors = Array.from(
     new Set(tileMasks.flatMap((mask) => mask.availableColors || []))
   );
-
+  
   // The currently selected mask object
   const selectedMask = tileMasks.find((mask) => mask.id === selectedMaskId);
 
@@ -90,7 +90,7 @@ const ColorEditor = ({ tile }) => {
                 WebkitMaskRepeat: "no-repeat",
                 opacity: 1,
                 pointerEvents: "auto",
-                mixBlendMode: "darken",
+                transition: "all 0.3s ease",
                 outline:
                   selectedMaskId === mask?.id ? "2px solid #3B82F6" : "none",
                 boxShadow:

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaBed, FaUtensils, FaBath, FaStore, FaWarehouse } from "react-icons/fa";
 import { MdCloseFullscreen, MdFullscreen } from "react-icons/md";
 import { IoMdClose } from "react-icons/io";
-import { BsGrid3X3, BsGrid3X3Gap, BsGrid3X3GapFill } from "react-icons/bs";
+import { IoGridSharp } from "react-icons/io5";
 import SaveButton from "./buttons/SaveButton";
 import ShopButton from "./buttons/ShopButton";
 import TileModal from "./TileModals";
@@ -42,10 +42,11 @@ const TileCanvasView = ({
     return savedThickness || "thin";
   });
 
-  const [localSize, setLocalSize] = useState(() => {
-    const savedSize = localStorage.getItem('tileSize');
-    return savedSize || "12x12";
-  });
+ const [localSize, setLocalSize] = useState(() => {
+  const savedSize = localStorage.getItem('tileSize');
+  return (savedSize === "8x8" || savedSize === "12x12") ? savedSize : "12x12";
+});
+
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +60,6 @@ const TileCanvasView = ({
   const sizeToPx = {
     "8x8": 8,    // 8 inches
     "12x12": 12, // 12 inches
-    "16x16": 16  // 16 inches
   };
 
   // Convert size to pixels for display
@@ -67,7 +67,7 @@ const TileCanvasView = ({
     const inches = sizeToPx[size] || 12;
     // Reverse the scale - larger number for smaller tiles
     // 8x8 should be largest, 16x16 should be smallest
-    const scale = 96 - (inches * 4); // This will give us 64px for 8x8, 48px for 12x12, 32px for 16x16
+    const scale = 96 - (inches * 4); // This will give us 64px for 8x8, 48px for 12x12, 
     return `${scale}px`;
   };
 
@@ -234,15 +234,8 @@ const TileCanvasView = ({
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-    const container = canvas.parentElement;
-    if (container) {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-    } else {
-      // Fallback dimensions
       canvas.width = 1200;
       canvas.height = 800;
-    }
 
       drawTilesOnCanvas(canvas, ctx);
     }
@@ -275,23 +268,17 @@ const TileCanvasView = ({
           style={{
             position: "relative",
             overflow: "hidden",
-            minHeight: "200px",
+            minHeight:"200px"
           }}
         >
           {/* Original Tile Image */}
           {selectedTile && (
-            <div className="relative w-full h-full">
-              {/* <img
-                src={selectedTile.image}
-                alt={selectedTile.name}
-                className="w-full h-full object-cover bg-gray-100 rounded-lg"
-                style={{
-                  backgroundSize: tileBgSize,
-                  backgroundRepeat: 'repeat'
-                }} */}
+            <div className="relative w-full h-full "
+            
+            >
               <canvas
                 ref={canvasRef}
-                className="w-full h-full bg-gray-100 rounded-lg"
+                className="w-full h-full object-cover bg-gray-100"
               />
 
               {/* Mask Layers */}
@@ -310,12 +297,13 @@ const TileCanvasView = ({
                     maskRepeat: 'repeat',
                     WebkitMaskRepeat: 'repeat',
                     mixBlendMode: 'source-in',
-                    opacity: 0.8
+                     zIndex: 1
                   }}
                 />
               ))}
 
               {/* Updated Grout overlay */}
+              
               {localThickness !== "none" && (
                 <div
                   style={{
@@ -345,6 +333,7 @@ const TileCanvasView = ({
                     backgroundRepeat: "repeat",
                     backgroundPosition: "center",
                     opacity: 1,
+                    zIndex: 2
                   }}
                 />
               )}
@@ -359,7 +348,7 @@ const TileCanvasView = ({
                 alt="Room preview"
                 className="w-full h-full object-cover absolute inset-0"
                 style={{
-                  zIndex: 1
+                  zIndex: 3
                 }}
               />
               <button
@@ -381,7 +370,7 @@ const TileCanvasView = ({
       </div>
 
       {/* Expanded View Popup */}
-      {isExpanded && (
+     {isExpanded && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
           <div className="relative w-full max-w-4xl bg-white rounded-lg overflow-hidden">
             <div className="absolute bottom-2 right-2 z-50">
@@ -393,95 +382,83 @@ const TileCanvasView = ({
               </button>
             </div>
             <div className="relative" style={{ minHeight: "500px" }}>
-              {/* Original Tile Image */}
-              {selectedTile && (
-                <div className="relative w-full h-full">
-                  {/* <img
-                    src={selectedTile.image}
-                    alt={selectedTile.name}
-                    className="w-full h-full object-contain bg-gray-100 rounded-lg"
-                  /> */}
-                  <canvas
-                     ref={canvasRef}
-                    className="w-full h-full bg-gray-100 rounded-lg"
-                  />
-
-                  {/* Mask Layers */}
-                  {tileMasks && tileMasks.map(mask => (
-                    <div
-                      key={mask.id}
-                      className="absolute inset-0"
-                      style={{
-                        backgroundColor: mask.color,
-                        maskImage: `url(${mask.image})`,
-                        WebkitMaskImage: `url(${mask.image})`,
-                        maskSize: 'cover',
-                        WebkitMaskSize: 'cover',
-                        maskPosition: 'center',
-                        WebkitMaskPosition: 'center',
-                        maskRepeat: 'no-repeat',
-                        WebkitMaskRepeat: 'no-repeat',
-                        mixBlendMode: 'source-in',
-                        opacity: 0.8
-                      }}
-                    />
-                  ))}
-
-                  {/* Updated Grout overlay */}
-                  {localThickness !== "none" && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        pointerEvents: "none",
-                        backgroundImage: `
-                          repeating-linear-gradient(
-                            to right,
-                            ${localGroutColor},
-                            ${localGroutColor} ${groutThicknessPx},
-                            transparent ${groutThicknessPx},
-                            transparent ${tileSizePx}
-                          ),
-                          repeating-linear-gradient(
-                            to bottom,
-                            ${localGroutColor},
-                            ${localGroutColor} ${groutThicknessPx},
-                            transparent ${groutThicknessPx},
-                            transparent ${tileSizePx}
-                          )
-                        `,
-                        backgroundSize: `${tileSizePx} ${tileSizePx}`,
-                        backgroundRepeat: "repeat",
-                        backgroundPosition: "center",
-                        opacity: 1,
-                      }}
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Environment Image */}
-              {currentEnv && (
-                <>
-                  <img
-                    src={currentEnv.image}
-                    alt="Room preview"
-                    className="w-full h-full object-cover absolute inset-0"
+              {/* Tile image and overlays as full background */}
+              <div className="relative w-full h-full" style={{ minHeight: "500px" }}>
+                {/* Mask Layers */}
+                {tileMasks && tileMasks.map(mask => (
+                  <div
+                    key={mask.id}
+                    className="absolute inset-0"
                     style={{
+                      backgroundColor: mask.color,
+                      maskImage: `url(${mask.image})`,
+                      WebkitMaskImage: `url(${mask.image})`,
+                      maskSize: tileBgSize,
+                      WebkitMaskSize: tileBgSize,
+                      maskPosition: 'center',
+                      WebkitMaskPosition: 'center',
+                      maskRepeat: 'repeat',
+                      WebkitMaskRepeat: 'repeat',
+                      mixBlendMode: 'source-in',
+                      opacity: 0.8,
                       zIndex: 1
                     }}
                   />
-                  <button
-                    onClick={() => setActiveEnv(null)}
-                    className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50"
-                  >
-                    <IoMdClose size={20} />
-                  </button>
-                </>
-              )}
+                ))}
+                {/* Grout overlay */}
+                {localThickness !== "none" && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      pointerEvents: "none",
+                      backgroundImage: `
+                  repeating-linear-gradient(
+                    to right,
+                    ${localGroutColor},
+                    ${localGroutColor} ${groutThicknessPx},
+                    transparent ${groutThicknessPx},
+                    transparent ${tileSizePx}
+                  ),
+                  repeating-linear-gradient(
+                    to bottom,
+                    ${localGroutColor},
+                    ${localGroutColor} ${groutThicknessPx},
+                    transparent ${groutThicknessPx},
+                    transparent ${tileSizePx}
+                  )
+                `,
+                      backgroundSize: `${tileSizePx} ${tileSizePx}`,
+                      backgroundRepeat: "repeat",
+                      backgroundPosition: "center",
+                      opacity: 1,
+                      zIndex: 2
+                    }}
+                  />
+                )}
+                {/* Environment Image */}
+                {currentEnv && (
+                  <>
+                    <img
+                      src={currentEnv.image}
+                      alt="Room preview"
+                      className="w-full h-full object-cover absolute inset-0"
+                      style={{
+                        zIndex: 3
+                      }}
+                    />
+                    <button
+                      onClick={() => setActiveEnv(null)}
+                      className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50"
+                    >
+                      <IoMdClose size={20} />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -495,25 +472,30 @@ const TileCanvasView = ({
             let Icon;
             switch (size) {
               case "8x8":
-                Icon = BsGrid3X3;
+                Icon = IoGridSharp;
                 break;
               case "12x12":
-                Icon = BsGrid3X3Gap;
-                break;
-              case "16x16":
-                Icon = BsGrid3X3GapFill;
+                Icon = IoGridSharp;
                 break;
               default:
-                Icon = BsGrid3X3;
+                Icon = null;
             }
+
+            // Conditional classes for scaling
+            const isSelected = localSize === size;
+            const isLarge = size === "12x12";
+            const baseClasses =
+              " px-3 py-1  tracking-wide flex flex-col items-center gap-1";
+            const textSize = isLarge ? "text-sm" : "text-xs"; // larger text for 12x12
+            const iconSize = isLarge ? 30 : 22; // larger icon for 12x12
             return (
               <button
                 key={size}
                 onClick={() => setLocalSize(size)}
-                className={`border px-3 py-1 uppercase text-xs tracking-wide flex items-center gap-2 ${localSize === size ? "bg-black text-white" : "bg-white text-black"
+                className={`${baseClasses} ${textSize} ${isSelected ? "bg-black text-white" : "bg-white text-black"
                   }`}
               >
-                <Icon size={16} />
+                {Icon && <Icon size={iconSize} />}
                 {size}
               </button>
             );

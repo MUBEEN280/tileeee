@@ -13,56 +13,246 @@ const tileCollections = {
       grout: 'cross',
       scale: 1,
       colorsUsed: [
-        '#2D3748', // dark gray
-        '#E2E8F0', // light gray
-        '#A0AEC0', // blue gray
-        '#4A5568', // slate
-        '#FFB300'  // orange (new, unique)
+        '#1f1d1b','#151312','#c5a7b1','#91897e','#d2c4af'  
       ],
       masks: [
         {
           id: 'mask1',
           name: 'Mask Pattern 1',
           image: '/Images/tiles/masks/Mask-1.png',
-          color: '#2D3748',
-          availableColors: [
-            '#2D3748', '#1A202C', '#171923', '#4A5568', '#718096', '#FF0000', '#FFB300', '#00B894', '#00BFFF', '#FFD700', '#FFFFFF', '#000000'
+          color: '#1f1d1b',
+          availableColors: ['#0D1117','#1C1C1E','#2D3748','#1A202C','#202124','#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
           id: 'mask2',
           name: 'Mask Pattern 2',
           image: '/Images/tiles/masks/Mask-2.png',
-          color: '#E2E8F0',
+          color: '#151312',
           availableColors: [
-            '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096', '#4A5568', '#2D3748', '#FFB300', '#00B894', '#00BFFF', '#FFD700', '#FFFFFF', '#000000'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
           id: 'mask3',
           name: 'Mask Pattern 3',
           image: '/Images/tiles/masks/Mask-3.png',
-          color: '#A0AEC0',
+          color: '#c5a7b1',
           availableColors: [
-            '#A0AEC0', '#CBD5E0', '#E2E8F0', '#718096', '#4A5568', '#2D3748', '#FFB300', '#00B894', '#00BFFF', '#FFD700', '#FFFFFF', '#000000'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
           id: 'mask4',
           name: 'Mask Pattern 4',
           image: '/Images/tiles/masks/Mask-4.png',
-          color: '#4A5568',
+          color: '#91897e',
           availableColors: [
-            '#4A5568', '#718096', '#A0AEC0', '#E2E8F0', '#2D3748', '#FFB300', '#00B894', '#00BFFF', '#FFD700', '#FFFFFF', '#000000'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
           id: 'mask5',
           name: 'Mask Pattern 5',
           image: '/Images/tiles/masks/Mask-5.png',
-          color: '#FFB300',
+          color: '#d2c4af',
           availableColors: [
-            '#FFB300', '#FFD700', '#FF0000', '#00B894', '#00BFFF', '#FFFFFF', '#000000', '#2D3748', '#E2E8F0', '#A0AEC0', '#4A5568', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
       ]
@@ -197,41 +387,85 @@ const tileCollections = {
       grout: 'line',
       scale: 1,
       colorsUsed: ['#000000', '#FFFFFF', '#A0AEC0', '#FFB300', '#718096'],
-      masks:[
+      masks: [
         {
-           maskId: 'mask1',
-           name: 'Border Mask 1',
-           image:'/Images/borders/bordersmask/Border-1.png',
-           color:'#000000',
-            availableColors: [
+          maskId: 'mask1',
+          name: 'Border Mask 1',
+          image: '/Images/borders/bordersmask/Border-1.png',
+          color: '#000000',
+          availableColors: [
             '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
           ]
         },
         {
-           maskId: 'mask2',
-           name: 'Border Mask 2',
-           image:'/Images/borders/bordersmask/Border-2.png',
-           color: '#FF5733',
-            availableColors: [
+          maskId: 'mask2',
+          name: 'Border Mask 2',
+          image: '/Images/borders/bordersmask/Border-2.png',
+          color: '#FF5733',
+          availableColors: [
             '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
           ]
         },
         {
-           maskId: 'mask3',
-           name: 'Border Mask 3',
-           image:'/Images/borders/bordersmask/Border-3.png',
+          maskId: 'mask3',
+          name: 'Border Mask 3',
+          image: '/Images/borders/bordersmask/Border-3.png',
           color: '#3498DB',
-            availableColors: [
+          availableColors: [
+            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+          ]
+        },
+        {
+          maskId: 'mask4',
+          name: 'Border Mask 4',
+          image: '/Images/borders/bordersmask/Border-4.png',
+          color: '#3498DB',
+          availableColors: [
+            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+          ]
+        },
+        {
+          maskId: 'mask5',
+          name: 'Border Mask 5',
+          image: '/Images/borders/bordersmask/Border-5.png',
+          color: '#3498DB',
+          availableColors: [
+            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+          ]
+        },
+        {
+          maskId: 'mask6',
+          name: 'Border Mask 6',
+          image: '/Images/borders/bordersmask/Border-6.png',
+          color: '#3498DB',
+          availableColors: [
+            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+          ]
+        },
+        {
+          maskId: 'mask7',
+          name: 'Border Mask 6',
+          image: '/Images/borders/bordersmask/Border-7.png',
+          color: '#3498DB',
+          availableColors: [
+            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+          ]
+        },
+        {
+          maskId: 'mask8',
+          name: 'Border Mask 6',
+          image: '/Images/borders/bordersmask/Border-8.png',
+          color: '#3498DB',
+          availableColors: [
             '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
           ]
         },
       ]
-    },    
+    },
   ]
 };
 
 export const TileSimulatorProvider = ({ children }) => {
-  // Existing state
   const [selectedTile, setSelectedTile] = useState(() => {
     const savedTile = localStorage.getItem('selectedTile');
     return savedTile ? JSON.parse(savedTile) : null;
