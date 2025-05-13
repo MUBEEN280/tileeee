@@ -15,7 +15,7 @@ const environments = [
   { icon: <FaStore />, label: "store", image: "/Images/commercial_old.png" },
 ];
 
-const groutColors = ["#ffffff", "#cccccc", "#333333","#FF0000",];
+const groutColors = ["#ffffff", "#cccccc", "#333333", "#FF0000",];
 const thicknessLevels = ["none", "thin", "thick"];
 
 const TileCanvasView = ({
@@ -31,12 +31,12 @@ const TileCanvasView = ({
     const savedEnv = localStorage.getItem('activeEnv');
     return savedEnv || null;
   });
-  
+
   const [localGroutColor, setLocalGroutColor] = useState(() => {
     const savedGroutColor = localStorage.getItem('groutColor');
     return savedGroutColor || "#333333";
   });
-  
+
   const [localThickness, setLocalThickness] = useState(() => {
     const savedThickness = localStorage.getItem('thickness');
     return savedThickness || "thin";
@@ -46,7 +46,7 @@ const TileCanvasView = ({
     const savedSize = localStorage.getItem('tileSize');
     return savedSize || "12x12";
   });
-  
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadedImages, setLoadedImages] = useState(new Map());
@@ -91,17 +91,17 @@ const TileCanvasView = ({
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      
+
       img.onload = () => {
         loadedImages.set(src, img);
         resolve(img);
       };
-      
+
       img.onerror = (e) => {
         console.error('Error loading image:', src, e);
         reject(new Error(`Failed to load image: ${src}`));
       };
-      
+
       img.src = src;
     });
   };
@@ -112,7 +112,7 @@ const TileCanvasView = ({
 
     // Get the actual size in inches
     const sizeInInches = sizeToPx[selectedSize] || 12;
-    
+
     // Reverse the grid size logic
     // Smaller tiles (16x16) should show more tiles, larger tiles (8x8) should show fewer
     const gridSize = Math.max(2, Math.ceil(sizeInInches / 4));
@@ -161,10 +161,10 @@ const TileCanvasView = ({
             const scale = Math.min(tileSize / baseImage.width, tileSize / baseImage.height);
             const scaledWidth = baseImage.width * scale;
             const scaledHeight = baseImage.height * scale;
-            
+
             const offsetX = (tileSize - scaledWidth) / 2;
             const offsetY = (tileSize - scaledHeight) / 2;
-            
+
             ctx.drawImage(baseImage, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
             ctx.restore();
           }
@@ -191,9 +191,9 @@ const TileCanvasView = ({
             const groutWidth = parseInt(groutThicknessPx);
             ctx.fillStyle = localGroutColor;
             // Vertical grout
-            ctx.fillRect(x - groutWidth/2, y, groutWidth, tileSize);
+            ctx.fillRect(x - groutWidth / 2, y, groutWidth, tileSize);
             // Horizontal grout
-            ctx.fillRect(x, y - groutWidth/2, tileSize, groutWidth);
+            ctx.fillRect(x, y - groutWidth / 2, tileSize, groutWidth);
           }
         }
       }
@@ -217,11 +217,11 @@ const TileCanvasView = ({
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     // Set canvas size to maintain aspect ratio
     canvas.width = 800;
     canvas.height = 800;
-    
+
     drawTilesOnCanvas(canvas, ctx);
   }, [selectedTile, selectedColor, selectedSize, localThickness, localGroutColor, tileMasks]);
 
@@ -233,10 +233,17 @@ const TileCanvasView = ({
 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      
-      canvas.width = 100;
-      canvas.height = 100;
-      
+
+    const container = canvas.parentElement;
+    if (container) {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+    } else {
+      // Fallback dimensions
+      canvas.width = 1200;
+      canvas.height = 800;
+    }
+
       drawTilesOnCanvas(canvas, ctx);
     }
   }, [isExpanded, selectedTile, selectedColor, localSize, localThickness, localGroutColor, tileMasks]);
@@ -274,16 +281,19 @@ const TileCanvasView = ({
           {/* Original Tile Image */}
           {selectedTile && (
             <div className="relative w-full h-full">
-              <img
+              {/* <img
                 src={selectedTile.image}
                 alt={selectedTile.name}
                 className="w-full h-full object-cover bg-gray-100 rounded-lg"
                 style={{
                   backgroundSize: tileBgSize,
                   backgroundRepeat: 'repeat'
-                }}
+                }} */}
+              <canvas
+                ref={canvasRef}
+                className="w-full h-full bg-gray-100 rounded-lg"
               />
-              
+
               {/* Mask Layers */}
               {tileMasks && tileMasks.map(mask => (
                 <div
@@ -382,16 +392,20 @@ const TileCanvasView = ({
                 <MdCloseFullscreen size={20} />
               </button>
             </div>
-            <div className="relative" style={{ minHeight: "200px" }}>
+            <div className="relative" style={{ minHeight: "500px" }}>
               {/* Original Tile Image */}
               {selectedTile && (
                 <div className="relative w-full h-full">
-                  <img
+                  {/* <img
                     src={selectedTile.image}
                     alt={selectedTile.name}
                     className="w-full h-full object-contain bg-gray-100 rounded-lg"
+                  /> */}
+                  <canvas
+                     ref={canvasRef}
+                    className="w-full h-full bg-gray-100 rounded-lg"
                   />
-                  
+
                   {/* Mask Layers */}
                   {tileMasks && tileMasks.map(mask => (
                     <div
@@ -479,7 +493,7 @@ const TileCanvasView = ({
         <div className="flex gap-2">
           {Object.keys(sizeToPx).map((size) => {
             let Icon;
-            switch(size) {
+            switch (size) {
               case "8x8":
                 Icon = BsGrid3X3;
                 break;
@@ -496,9 +510,8 @@ const TileCanvasView = ({
               <button
                 key={size}
                 onClick={() => setLocalSize(size)}
-                className={`border px-3 py-1 uppercase text-xs tracking-wide flex items-center gap-2 ${
-                  localSize === size ? "bg-black text-white" : "bg-white text-black"
-                }`}
+                className={`border px-3 py-1 uppercase text-xs tracking-wide flex items-center gap-2 ${localSize === size ? "bg-black text-white" : "bg-white text-black"
+                  }`}
               >
                 <Icon size={16} />
                 {size}
@@ -515,9 +528,8 @@ const TileCanvasView = ({
           {environments.map((env) => (
             <button
               key={env.label}
-              className={`p-3 border text-xl ${
-                activeEnv === env.label ? "bg-black text-white" : "bg-white text-black"
-              } rounded`}
+              className={`p-3 border text-xl ${activeEnv === env.label ? "bg-black text-white" : "bg-white text-black"
+                } rounded`}
               onClick={() => setActiveEnv(env.label)}
             >
               {env.icon}
@@ -535,9 +547,8 @@ const TileCanvasView = ({
             {groutColors.map((color, index) => (
               <div
                 key={index}
-                className={`w-6 h-6 rounded-full border cursor-pointer ${
-                  localGroutColor === color ? "ring-2 ring-black" : ""
-                }`}
+                className={`w-6 h-6 rounded-full border cursor-pointer ${localGroutColor === color ? "ring-2 ring-black" : ""
+                  }`}
                 style={{ backgroundColor: color }}
                 onClick={() => setLocalGroutColor(color)}
               />
@@ -553,9 +564,8 @@ const TileCanvasView = ({
               <button
                 key={level}
                 onClick={() => setLocalThickness(level)}
-                className={`border px-3 py-1 uppercase text-xs tracking-wide ${
-                  localThickness === level ? "bg-black text-white" : "bg-white text-black"
-                }`}
+                className={`border px-3 py-1 uppercase text-xs tracking-wide ${localThickness === level ? "bg-black text-white" : "bg-white text-black"
+                  }`}
               >
                 {level}
               </button>
@@ -571,7 +581,7 @@ const TileCanvasView = ({
       </div>
 
       {/* TileModal */}
-      <TileModal 
+      <TileModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         tileConfig={{

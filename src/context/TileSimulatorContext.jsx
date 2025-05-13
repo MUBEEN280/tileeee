@@ -192,40 +192,41 @@ const tileCollections = {
     {
       id: 6,
       name: "BORDER A",
-      image: "/Images/borders/Border-1.png",
+      image: "/Images/borders/Main-Border.png",
       shape: 'rectangle',
       grout: 'line',
       scale: 1,
       colorsUsed: ['#000000', '#FFFFFF', '#A0AEC0', '#FFB300', '#718096'],
-    },
-    {
-      id: 7,
-      name: "BORDER B",
-      image: "/Images/borders/Border-2.png",
-      shape: 'rectangle',
-      grout: 'line',
-      scale: 1,
-      colorsUsed: ['#2D3748', '#E2E8F0', '#FF0000', '#00B894', '#FFD700'],
-    },
-    {
-      id: 8,
-      name: "BORDER C",
-      image: "/Images/borders/Border-3.png",
-      shape: 'rectangle',
-      grout: 'line',
-      scale: 1,
-      colorsUsed: ['#2D3748', '#E2E8F0', '#FF0000', '#00B894', '#FFD700'],
-    },
-    {
-      id: 9,
-      name: "BORDER D",
-      image: "/Images/borders/Border-4.png",
-      shape: 'rectangle',
-      grout: 'line',
-      scale: 1,
-      colorsUsed: ['#2D3748', '#E2E8F0', '#FF0000', '#00B894', '#FFD700'],
-    },
-
+      masks:[
+        {
+           maskId: 'mask1',
+           name: 'Border Mask 1',
+           image:'/Images/borders/bordersmask/Border-1.png',
+           color:'#000000',
+            availableColors: [
+            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+          ]
+        },
+        {
+           maskId: 'mask2',
+           name: 'Border Mask 2',
+           image:'/Images/borders/bordersmask/Border-2.png',
+           color: '#FF5733',
+            availableColors: [
+            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+          ]
+        },
+        {
+           maskId: 'mask3',
+           name: 'Border Mask 3',
+           image:'/Images/borders/bordersmask/Border-3.png',
+          color: '#3498DB',
+            availableColors: [
+            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+          ]
+        },
+      ]
+    },    
   ]
 };
 
