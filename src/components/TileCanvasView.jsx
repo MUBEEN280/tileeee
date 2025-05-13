@@ -57,11 +57,23 @@ const TileCanvasView = ({
   const currentEnv = environments.find((env) => env.label === activeEnv);
 
   const sizeToPx = {
-    "8x8": "80px 80px",
-    "12x12": "120px 120px",
-    "16x16": "160px 160px",
+    "8x8": 8,    // 8 inches
+    "12x12": 12, // 12 inches
+    "16x16": 16  // 16 inches
   };
-  const tileBgSize = sizeToPx[localSize] || "120px 120px";
+
+  // Convert size to pixels for display
+  const getTileSizeInPx = (size) => {
+    const inches = sizeToPx[size] || 12;
+    // Reverse the scale - larger number for smaller tiles
+    // 8x8 should be largest, 16x16 should be smallest
+    const scale = 96 - (inches * 4); // This will give us 64px for 8x8, 48px for 12x12, 32px for 16x16
+    return `${scale}px`;
+  };
+
+  // Get the actual pixel size for the current tile
+  const tileBgSize = getTileSizeInPx(localSize);
+  const tileSizePx = tileBgSize;
 
   const thicknessToPx = {
     none: "0px",
@@ -69,7 +81,6 @@ const TileCanvasView = ({
     thick: "6px",
   };
   const groutThicknessPx = thicknessToPx[localThickness] || "2px";
-  const tileSizePx = tileBgSize.split(" ")[0] || "120px";
 
   // Function to load and cache images
   const loadImage = (src) => {
@@ -99,8 +110,13 @@ const TileCanvasView = ({
   const drawTilesOnCanvas = async (canvas, ctx) => {
     if (!canvas || !selectedTile) return;
 
-    const size = parseInt(localSize.split('x')[0]);
-    const tileSize = canvas.width / size;
+    // Get the actual size in inches
+    const sizeInInches = sizeToPx[selectedSize] || 12;
+    
+    // Reverse the grid size logic
+    // Smaller tiles (16x16) should show more tiles, larger tiles (8x8) should show fewer
+    const gridSize = Math.max(2, Math.ceil(sizeInInches / 4));
+    const tileSize = canvas.width / gridSize;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -133,39 +149,62 @@ const TileCanvasView = ({
       }
 
       // Draw tiles in a grid pattern
-      for (let row = 0; row < size; row++) {
-        for (let col = 0; col < size; col++) {
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
           const x = col * tileSize;
           const y = row * tileSize;
 
-          // Draw base tile
+          // Draw base tile with proper scaling
           if (baseImage) {
             ctx.save();
-            ctx.drawImage(baseImage, x, y, tileSize, tileSize);
+            // Maintain aspect ratio while scaling
+            const scale = Math.min(tileSize / baseImage.width, tileSize / baseImage.height);
+            const scaledWidth = baseImage.width * scale;
+            const scaledHeight = baseImage.height * scale;
+            
+            const offsetX = (tileSize - scaledWidth) / 2;
+            const offsetY = (tileSize - scaledHeight) / 2;
+            
+            ctx.drawImage(baseImage, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
             ctx.restore();
           }
 
-          // Draw masks
+          // Draw masks with proper scaling
           maskImages.forEach(({ image, mask }) => {
             ctx.save();
+            const scale = Math.min(tileSize / image.width, tileSize / image.height);
+            const scaledWidth = image.width * scale;
+            const scaledHeight = image.height * scale;
+            const offsetX = (tileSize - scaledWidth) / 2;
+            const offsetY = (tileSize - scaledHeight) / 2;
+
             ctx.globalCompositeOperation = 'source-in';
-            ctx.drawImage(image, x, y, tileSize, tileSize);
+            ctx.drawImage(image, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
             ctx.globalCompositeOperation = 'source-atop';
             ctx.fillStyle = mask.color;
             ctx.fillRect(x, y, tileSize, tileSize);
             ctx.restore();
           });
 
-          // Draw grout
+          // Draw grout with proper scaling
           if (localThickness !== "none") {
+            const groutWidth = parseInt(groutThicknessPx);
             ctx.fillStyle = localGroutColor;
             // Vertical grout
-            ctx.fillRect(x - localThickness/2, y, localThickness, tileSize);
+            ctx.fillRect(x - groutWidth/2, y, groutWidth, tileSize);
             // Horizontal grout
-            ctx.fillRect(x, y - localThickness/2, tileSize, localThickness);
+            ctx.fillRect(x, y - groutWidth/2, tileSize, groutWidth);
           }
         }
       }
+
+      // Add size indicator with more visible styling
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText(`${sizeInInches}" x ${sizeInInches}"`, 20, 40);
+      ctx.restore();
+
     } catch (error) {
       console.error('Error in drawing process:', error);
     }
@@ -179,11 +218,12 @@ const TileCanvasView = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
+    // Set canvas size to maintain aspect ratio
     canvas.width = 800;
     canvas.height = 800;
     
     drawTilesOnCanvas(canvas, ctx);
-  }, [selectedTile, selectedColor, localSize, localThickness, localGroutColor, tileMasks]);
+  }, [selectedTile, selectedColor, selectedSize, localThickness, localGroutColor, tileMasks]);
 
   // Effect to draw on expanded canvas
   useEffect(() => {
@@ -238,6 +278,10 @@ const TileCanvasView = ({
                 src={selectedTile.image}
                 alt={selectedTile.name}
                 className="w-full h-full object-cover bg-gray-100 rounded-lg"
+                style={{
+                  backgroundSize: tileBgSize,
+                  backgroundRepeat: 'repeat'
+                }}
               />
               
               {/* Mask Layers */}
@@ -249,19 +293,19 @@ const TileCanvasView = ({
                     backgroundColor: mask.color,
                     maskImage: `url(${mask.image})`,
                     WebkitMaskImage: `url(${mask.image})`,
-                    maskSize: 'cover',
-                    WebkitMaskSize: 'cover',
+                    maskSize: tileBgSize,
+                    WebkitMaskSize: tileBgSize,
                     maskPosition: 'center',
                     WebkitMaskPosition: 'center',
-                    maskRepeat: 'no-repeat',
-                    WebkitMaskRepeat: 'no-repeat',
+                    maskRepeat: 'repeat',
+                    WebkitMaskRepeat: 'repeat',
                     mixBlendMode: 'source-in',
                     opacity: 0.8
                   }}
                 />
               ))}
 
-              {/* Grout overlay */}
+              {/* Updated Grout overlay */}
               {localThickness !== "none" && (
                 <div
                   style={{
@@ -287,7 +331,7 @@ const TileCanvasView = ({
                         transparent ${tileSizePx}
                       )
                     `,
-                    backgroundSize: tileBgSize,
+                    backgroundSize: `${tileSizePx} ${tileSizePx}`,
                     backgroundRepeat: "repeat",
                     backgroundPosition: "center",
                     opacity: 1,
@@ -369,7 +413,7 @@ const TileCanvasView = ({
                     />
                   ))}
 
-                  {/* Grout overlay */}
+                  {/* Updated Grout overlay */}
                   {localThickness !== "none" && (
                     <div
                       style={{
@@ -395,7 +439,7 @@ const TileCanvasView = ({
                             transparent ${tileSizePx}
                           )
                         `,
-                        backgroundSize: tileBgSize,
+                        backgroundSize: `${tileSizePx} ${tileSizePx}`,
                         backgroundRepeat: "repeat",
                         backgroundPosition: "center",
                         opacity: 1,
