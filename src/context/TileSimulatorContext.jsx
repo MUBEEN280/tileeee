@@ -187,6 +187,45 @@ const tileCollections = {
         }
       ]
     }
+  ],
+  "Border Collection": [
+    {
+      id: 6,
+      name: "BORDER A",
+      image: "/Images/borders/Border-1.png",
+      shape: 'rectangle',
+      grout: 'line',
+      scale: 1,
+      colorsUsed: ['#000000', '#FFFFFF', '#A0AEC0', '#FFB300', '#718096'],
+    },
+    {
+      id: 7,
+      name: "BORDER B",
+      image: "/Images/borders/Border-2.png",
+      shape: 'rectangle',
+      grout: 'line',
+      scale: 1,
+      colorsUsed: ['#2D3748', '#E2E8F0', '#FF0000', '#00B894', '#FFD700'],
+    },
+    {
+      id: 8,
+      name: "BORDER C",
+      image: "/Images/borders/Border-3.png",
+      shape: 'rectangle',
+      grout: 'line',
+      scale: 1,
+      colorsUsed: ['#2D3748', '#E2E8F0', '#FF0000', '#00B894', '#FFD700'],
+    },
+    {
+      id: 9,
+      name: "BORDER D",
+      image: "/Images/borders/Border-4.png",
+      shape: 'rectangle',
+      grout: 'line',
+      scale: 1,
+      colorsUsed: ['#2D3748', '#E2E8F0', '#FF0000', '#00B894', '#FFD700'],
+    },
+
   ]
 };
 
@@ -205,6 +244,11 @@ export const TileSimulatorProvider = ({ children }) => {
   const [selectedSize, setSelectedSize] = useState(() => {
     const savedSize = localStorage.getItem('selectedSize');
     return savedSize || "8x8";
+  });
+
+  const [selectedBorder, setSelectedBorder] = useState(() => {
+    const savedBorder = localStorage.getItem('selectedBorder');
+    return savedBorder ? JSON.parse(savedBorder) : null;
   });
 
   // New state for mask functionality
@@ -251,7 +295,7 @@ export const TileSimulatorProvider = ({ children }) => {
     if (selectedTile?.masks) {
       console.log('Updating masks for tile:', selectedTile);
       // Check if this is a new tile selection or a page refresh
-      const isNewSelection = !localStorage.getItem('selectedTile') || 
+      const isNewSelection = !localStorage.getItem('selectedTile') ||
         JSON.parse(localStorage.getItem('selectedTile'))?.id !== selectedTile.id;
 
       if (isNewSelection) {
@@ -276,8 +320,8 @@ export const TileSimulatorProvider = ({ children }) => {
   const setTileMaskColor = (maskId, color) => {
     console.log('Setting mask color:', { maskId, color });
     setTileMasks(prevMasks => {
-      const updatedMasks = prevMasks.map(mask => 
-        mask.id === maskId 
+      const updatedMasks = prevMasks.map(mask =>
+        mask.id === maskId
           ? { ...mask, color }
           : mask
       );
@@ -286,39 +330,44 @@ export const TileSimulatorProvider = ({ children }) => {
       return updatedMasks;
     });
   };
+  const handleBorderSelect = (border) => {
+    setSelectedBorder(border);
+    localStorage.setItem('selectedBorder', JSON.stringify(border));
+  };
+
 
   // Save to localStorage whenever state changes
   useEffect(() => {
     if (selectedTile) {
-      console.log('Saving selected tile to localStorage:', selectedTile);
       localStorage.setItem('selectedTile', JSON.stringify(selectedTile));
     }
   }, [selectedTile]);
 
   useEffect(() => {
+    if (selectedBorder) {
+      localStorage.setItem('selectedBorder', JSON.stringify(selectedBorder));
+    }
+  }, [selectedBorder]);
+
+  useEffect(() => {
     if (selectedColor) {
-      console.log('Saving selected color to localStorage:', selectedColor);
       localStorage.setItem('selectedColor', selectedColor);
     }
   }, [selectedColor]);
 
   useEffect(() => {
-    console.log('Saving selected size to localStorage:', selectedSize);
     localStorage.setItem('selectedSize', selectedSize);
   }, [selectedSize]);
 
   useEffect(() => {
-    console.log('Saving selected environment to localStorage:', selectedEnvironment);
     localStorage.setItem('selectedEnvironment', selectedEnvironment);
   }, [selectedEnvironment]);
 
   useEffect(() => {
-    console.log('Saving grout color to localStorage:', groutColor);
     localStorage.setItem('groutColor', groutColor);
   }, [groutColor]);
 
   useEffect(() => {
-    console.log('Saving grout thickness to localStorage:', groutThickness);
     localStorage.setItem('groutThickness', groutThickness);
   }, [groutThickness]);
 
@@ -341,6 +390,9 @@ export const TileSimulatorProvider = ({ children }) => {
         setGroutThickness,
         tileMasks,
         setTileMaskColor,
+        selectedBorder,
+        setSelectedBorder,
+        handleBorderSelect,
         availableTiles: Object.values(tileCollections).flat(),
         tileCollections
       }}
