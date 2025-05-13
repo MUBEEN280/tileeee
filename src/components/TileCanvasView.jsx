@@ -161,6 +161,7 @@ const TileCanvasView = ({
             const scale = Math.min(tileSize / baseImage.width, tileSize / baseImage.height);
             const scaledWidth = baseImage.width * scale;
             const scaledHeight = baseImage.height * scale;
+            
             const offsetX = (tileSize - scaledWidth) / 2;
             const offsetY = (tileSize - scaledHeight) / 2;
             
