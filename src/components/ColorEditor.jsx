@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useTileSimulator } from "../context/TileSimulatorContext";
+import { FaPlus } from "react-icons/fa6";
 
 const ColorEditor = ({ tile }) => {
   const { setTileMaskColor, tileMasks } = useTileSimulator();
   const [hoveredPaletteColor, setHoveredPaletteColor] = useState(null);
   const [previewMode, setPreviewMode] = useState(false);
-  // Track which mask is selected for editing
   const [selectedMaskId, setSelectedMaskId] = useState(
     tileMasks && tileMasks.length > 0 ? tileMasks[0].id : null
   );
@@ -16,7 +16,7 @@ const ColorEditor = ({ tile }) => {
   const allAvailableColors = Array.from(
     new Set(tileMasks.flatMap((mask) => mask.availableColors || []))
   );
-  
+
   // The currently selected mask object
   const selectedMask = tileMasks.find((mask) => mask.id === selectedMaskId);
 
@@ -58,14 +58,20 @@ const ColorEditor = ({ tile }) => {
 
   // The color of the selected mask (for highlighting in palette and 'Colors Used')
   const selectedMaskColor = selectedMask ? selectedMask.color : null;
+ 
+    const handleAddBorders = () => {
+    const confirmed = window.confirm("Please Chose a border first");
+    if (confirmed) {
+     
+    }
+  };
 
   return (
-    <div className="mt-6 p-4 bg-white rounded-lg shadow-lg">
-      <h3 className="text-lg font-semibold mb-4">Color Editor</h3>
+    <div className="pb-4">
       <div className="mb-4">
-        <h4 className="text-md font-medium mb-2">Editing Tile: {tile.name}</h4>
+        <h4 className="text-md  mb-2 font-light font-poppins text-center lg:text-left uppercase tracking-wide ">Edit Tile : {tile.name}</h4>
         {/* Tile Preview */}
-        <div className="mb-4 aspect-square max-w-xs mx-auto relative">
+        <div className="mb-4 aspect-square max-w-xs mx-auto lg:mx-0 relative">
           <img
             src={tile.image}
             alt={tile.name}
@@ -74,9 +80,8 @@ const ColorEditor = ({ tile }) => {
           {tileMasks.map((mask) => (
             <div
               key={mask?.id}
-              className={`absolute inset-0 cursor-pointer ${
-                selectedMaskId === mask?.id ? "ring-2 ring-primary" : ""
-              }`}
+              className={`absolute inset-0 cursor-pointer ${selectedMaskId === mask?.id ? "ring-2 ring-primary" : ""
+                }`}
               onClick={() => handleMaskLayerClick(mask?.id)}
               style={{
                 backgroundColor: getMaskColor(mask),
@@ -90,6 +95,7 @@ const ColorEditor = ({ tile }) => {
                 WebkitMaskRepeat: "no-repeat",
                 opacity: 1,
                 pointerEvents: "auto",
+                zIndex: 10,
                 transition: "all 0.3s ease",
                 outline:
                   selectedMaskId === mask?.id ? "2px solid #3B82F6" : "none",
@@ -102,18 +108,27 @@ const ColorEditor = ({ tile }) => {
             />
           ))}
         </div>
+
+         <div className="mb-4 flex justify-center items-center lg:justify-start lg:items-start gap-2">
+         <button className="flex justify-center items-center gap-2 bg-black hover:bg-black/90 text-white font-poppins font-light py-2 px-4 rounded-md hover:shadow-md hover:shadow-red-500 transition duration-300 ease-in-out"
+         onClick={handleAddBorders}
+         >
+          <span><FaPlus/></span>
+          <span>Add Borders</span>
+         </button>
+         </div>
+
         {/* Colors Used */}
         <div className="mb-4">
-          <h4 className="font-medium mb-2">Colors Used</h4>
-          <div className="flex flex-wrap gap-2">
+          <h4 className=" mb-2 font-light font-poppins text-center lg:text-left">Colors Used</h4>
+          <div className="flex justify-center items-center lg:justify-start lg:items-start  flex-wrap gap-2">
             {(tile.colorsUsed || []).map((color, index) => (
               <button
                 key={`color-used-${index}-${color}`}
-                className={`w-8 h-8 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
-                  selectedMaskColor === color
-                    ? "border-black ring-2 ring-offset-2 ring-primary"
-                    : "border-gray-200 hover:border-primary"
-                }`}
+                className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500 ${selectedMaskColor === color
+                  ? "border-black ring-1 ring-offset-1 ring-red-500"
+                  : "border-gray-200 hover:border-red-500"
+                  }`}
                 style={{ backgroundColor: color }}
                 title={color}
                 onClick={() => handleColorUsedClick(color)}
@@ -122,15 +137,14 @@ const ColorEditor = ({ tile }) => {
           </div>
         </div>
         {/* Unified Color Palette */}
-        <div className="w-full flex flex-wrap justify-center gap-2 bg-gray-100 rounded-lg p-2 shadow-inner">
+        <div className="w-full flex flex-wrap justify-center gap-2 bg-gray-100 rounded-lg p-2 shadow-inner max-w-xs mx-auto lg:mx-0">
           {allAvailableColors.map((paletteColor, index) => (
             <button
               key={`palette-color-${index}-${paletteColor}`}
-              className={`w-8 h-8 rounded-full border-2 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary ${
-                selectedMaskColor === paletteColor
-                  ? "border-black ring-2 ring-offset-2 ring-primary"
-                  : "border-transparent hover:border-gray-400"
-              }`}
+              className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 ${selectedMaskColor === paletteColor
+                ? "border-black ring-1 ring-offset-1 ring-red-500"
+                : "border-transparent hover:border-red-500"
+                }`}
               style={{ backgroundColor: paletteColor }}
               title={paletteColor}
               onClick={() => handlePaletteColorSelect(paletteColor)}

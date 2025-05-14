@@ -14,29 +14,27 @@ const TileSelector = ({ onSelectTile }) => {
   };
 
   return (
-    <div className="p-4">
-      <div className="flex gap-2 mb-4 overflow-x-auto">
+    <div className="flex flex-col md:flex-row gap-2">
+      <div className="flex md:flex-col justify-start items-start overflow-x-auto md:overflow-y-auto gap-2 md:min-w-[180px] bg-gray-100 p-2 rounded-lg">
         {Object.keys(tileCollections).map((collection) => (
           <button
             key={collection}
             onClick={() => setActiveCollection(collection)}
-            className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${
+            className={`px-4 py-2 whitespace-nowrap font-poppins font-light ${
               activeCollection === collection
-                ? 'bg-black text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            } rounded-lg transition-colors`}
+                ? 'text-sm text-gray-900'
+                : 'text-xs text-gray-700 hover:text-gray-900'
+            } rounded-lg transition-all duration-300 ease-in-out`}
           >
             {collection}
           </button>
         ))}
       </div>
-
-      {/* Tile Grid - Show original tiles only */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3  lg:grid-cols-2  gap-2 flex-1 bg-gray-100 p-2 rounded-lg font-light font-poppins overflow-x-auto lg:overflow-y-auto">
         {tileCollections[activeCollection].map((tile) => (
           <div
             key={tile.id}
-            className={`relative aspect-square group  cursor-pointer group ${
+            className={`relative aspect-square group cursor-pointer ${
               selectedTile?.id === tile.id ? 'overflow-hidden' : ''
             }`}
             onClick={() => handleTileSelect(tile)}
@@ -46,8 +44,8 @@ const TileSelector = ({ onSelectTile }) => {
               alt={tile.name}
               className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg " />
-            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-50 text-white text-sm rounded-b-lg text-center hidden group-hover:block transition-all duration-300 ease-in-out">
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
+            <div className="absolute bottom-0 left-0 right-0 py-1 bg-black bg-opacity-50 text-white text-[10px]  rounded-b-lg text-center hidden group-hover:block transition-all duration-300 ease-in-out">
               {tile.name}
             </div>
           </div>

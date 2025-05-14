@@ -1,14 +1,16 @@
-import scrollbar from 'tailwind-scrollbar';
+import scrollbar from "tailwind-scrollbar";
 
 export default {
-  content: [
-    "./src/**/*.{js,jsx,ts,tsx}", // Adjust for your file structure
-  ],
+  content: ["./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        poppins: ["Poppins", "sans-serif"],
+      },
       maxWidth: {
-        '7xl': '80vw',
-        '8xl': '90vw',
+        "7xl": "80rem",
+        "8xl": "88rem",
+        "9xl": "100rem",
       },
     },
   },

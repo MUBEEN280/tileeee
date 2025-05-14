@@ -248,9 +248,8 @@ const TileCanvasView = ({
   if (!selectedTile) {
     return (
       <div className="max-w-4xl mx-auto p-4">
-        <h2 className="text-center text-xl tracking-widest mb-2">TILE VISUALIZER</h2>
-        <hr className="mb-4" />
-        <div className="text-center text-gray-500">
+        <h2 className="text-center lg:text-left font-light font-poppins text-xl tracking-widest mb-2">TILE VISUALIZER</h2>
+        <div className="text-center lg:text-left font-light font-poppins text-gray-500">
           Please select a tile to preview
         </div>
       </div>
@@ -258,11 +257,9 @@ const TileCanvasView = ({
   }
 
   return (
-    <div className={`max-w-4xl mx-auto p-4 ${isExpanded ? "h-screen" : ""}`}>
-      <h2 className="text-center text-xl tracking-widest mb-2">TILE VISUALIZER</h2>
-      <hr className="mb-4" />
-
-      <div className="relative mb-6">
+    <div className={`max-w-4xl mx-auto lg:mx-0 ${isExpanded ? "h-screen" : ""}`}>
+      <h2 className="text-center lg:text-left font-light font-poppins  text-xl tracking-widest mb-2">TILE VISUALIZER</h2>
+       <div className="relative mb-6">
         <div
           className={`w-full rounded shadow ${isExpanded ? "h-full" : ""}`}
           style={{
@@ -466,7 +463,7 @@ const TileCanvasView = ({
 
       {/* Tile Size Selection */}
       <div className="mb-6">
-        <div className="text-sm font-medium mb-2 tracking-wider">TILE SIZE:</div>
+        <div className="text-sm font-light font-poppins mb-2 tracking-wider">TILE SIZE:</div>
         <div className="flex gap-2">
           {Object.keys(sizeToPx).map((size) => {
             let Icon;
@@ -486,7 +483,7 @@ const TileCanvasView = ({
             const isLarge = size === "12x12";
             const baseClasses =
               " px-3 py-1  tracking-wide flex flex-col items-center gap-1";
-            const textSize = isLarge ? "text-sm" : "text-xs"; // larger text for 12x12
+            const textSize = isLarge ? "text-sm font-light font-poppins" : "text-xs font-light font-poppins"; // larger text for 12x12
             const iconSize = isLarge ? 30 : 22; // larger icon for 12x12
             return (
               <button
@@ -505,7 +502,7 @@ const TileCanvasView = ({
 
       {/* Environment Selection */}
       <div className="mb-6">
-        <div className="text-sm font-medium mb-2 tracking-wider">CHOOSE ENVIRONMENT:</div>
+        <div className="text-sm font-light font-poppins mb-2 tracking-wider">CHOOSE ENVIRONMENT:</div>
         <div className="flex items-center gap-4 flex-wrap">
           {environments.map((env) => (
             <button
@@ -524,7 +521,7 @@ const TileCanvasView = ({
       <div className="flex gap-6 mb-6">
         {/* Grout Color */}
         <div className="flex-1">
-          <div className="text-sm font-medium mb-2 tracking-wider">GROUT COLOR:</div>
+          <div className="text-sm  mb-2 tracking-wider font-light font-poppins">GROUT COLOR:</div>
           <div className="flex gap-4">
             {groutColors.map((color, index) => (
               <div
@@ -540,13 +537,13 @@ const TileCanvasView = ({
 
         {/* Grout Thickness */}
         <div className="flex-1">
-          <div className="text-sm font-medium mb-2 tracking-wider">GROUT THICKNESS:</div>
+          <div className="text-sm mb-2 tracking-wider font-light font-poppins">GROUT THICKNESS:</div>
           <div className="flex gap-2">
             {thicknessLevels.map((level) => (
               <button
                 key={level}
                 onClick={() => setLocalThickness(level)}
-                className={`border px-3 py-1 uppercase text-xs tracking-wide ${localThickness === level ? "bg-black text-white" : "bg-white text-black"
+                className={`border px-3 py-1 uppercase text-xs tracking-wide font-light font-poppins ${localThickness === level ? "bg-black text-white" : "bg-white text-black"
                   }`}
               >
                 {level}
