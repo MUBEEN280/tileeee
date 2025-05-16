@@ -315,7 +315,8 @@ const TileCanvasView = ({
                     maskRepeat: 'no-repeat',
                     WebkitMaskRepeat: 'no-repeat',
                     mixBlendMode: 'source-in',
-                    zIndex: 3
+                    zIndex: 3,
+                    clipPath: 'polygon(0 0, 8% 0, 8% 8%, 0 8%, 0 0, 100% 0, 100% 8%, 92% 8%, 92% 0, 100% 0, 100% 100%, 92% 100%, 92% 92%, 100% 92%, 100% 100%, 0 100%, 0 92%, 8% 92%, 8% 100%, 0 100%)'
                   }}
                 />
               ))}
@@ -398,9 +399,9 @@ const TileCanvasView = ({
                 <MdCloseFullscreen size={20} />
               </button>
             </div>
-            <div className="relative" style={{ minHeight: "700px" }}>
+            <div className="relative" style={{ minHeight: "500px" }}>
               {/* Tile image and overlays as full background */}
-              <div className="relative w-full h-full" style={{ minHeight: "700px" }}>
+              <div className="relative w-full h-full" style={{ minHeight: "500px" }}>
                 {/* Mask Layers */}
                 {tileMasks && tileMasks.map(mask => (
                   <div

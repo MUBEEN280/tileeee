@@ -1,17 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTileSimulator } from "../context/TileSimulatorContext";
 import { FaPlus } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
 
 const ColorEditor = ({ tile }) => {
-  const { 
-    setTileMaskColor, 
-    tileMasks, 
-    selectedBorder, 
-    setSelectedBorder, 
-    setSelectedCategory, 
-    borderMasks, 
-    setBorderMaskColor 
+  const {
+    setTileMaskColor,
+    tileMasks,
+    selectedBorder,
+    setSelectedBorder,
+    setSelectedCategory,
+    borderMasks,
+    setBorderMaskColor
   } = useTileSimulator();
 
   const [hoveredPaletteColor, setHoveredPaletteColor] = useState(null);
@@ -40,6 +40,7 @@ const ColorEditor = ({ tile }) => {
   // When a palette color is clicked, update only the selected mask
   const handlePaletteColorSelect = (paletteColor) => {
     if (selectedBorderMask && selectedBorderMaskId) {
+      // Update border mask color
       setBorderMaskColor(selectedBorderMaskId, paletteColor);
     } else if (selectedMask) {
       setTileMaskColor(selectedMask.id, paletteColor);
@@ -50,13 +51,15 @@ const ColorEditor = ({ tile }) => {
 
   // For preview: if previewMode, show hoveredPaletteColor for selected mask only
   const getMaskColor = (mask) => {
-    if (
-      previewMode &&
-      hoveredPaletteColor &&
-      ((selectedMask && mask.id === selectedMask.id) || 
-       (selectedBorderMask && mask.maskId === selectedBorderMask.maskId))
-    ) {
-      return hoveredPaletteColor;
+    if (previewMode && hoveredPaletteColor) {
+      // Check if this is a border mask
+      if (mask.maskId && selectedBorderMask && mask.maskId === selectedBorderMask.maskId) {
+        return hoveredPaletteColor;
+      }
+      // Check if this is a tile mask
+      if (mask.id && selectedMask && mask.id === selectedMask.id) {
+        return hoveredPaletteColor;
+      }
     }
     return mask.color;
   };
@@ -70,8 +73,8 @@ const ColorEditor = ({ tile }) => {
       setSelectedBorderMaskId(null);
       return;
     }
-    
-    // Then check border masks
+
+    // Then check tile masks
     const borderMaskWithColor = borderMasks?.find((mask) => mask.color === color);
     if (borderMaskWithColor) {
       setSelectedBorderMaskId(borderMaskWithColor.maskId);
@@ -80,8 +83,8 @@ const ColorEditor = ({ tile }) => {
   };
 
   // The color of the selected mask (for highlighting in palette and 'Colors Used')
-  const selectedMaskColor = selectedMask ? selectedMask.color : 
-                          selectedBorderMask ? selectedBorderMask.color : null;
+  const selectedMaskColor = selectedMask ? selectedMask.color :
+    selectedBorderMask ? selectedBorderMask.color : null;
 
   // Handle Add Borders & Remove Borders
   const handleAddOrRemoveBorders = () => {
@@ -98,29 +101,29 @@ const ColorEditor = ({ tile }) => {
   // Get unique colors with their sources
   const getUniqueColors = () => {
     const colorMap = new Map();
-    
+
     // First add tile mask colors
     tileMasks.forEach(mask => {
       colorMap.set(mask.color, { type: 'tile', mask });
     });
-    
+
     // Then add/update with border mask colors
     borderMasks?.forEach(mask => {
       if (colorMap.has(mask.color)) {
         // If color exists, mark it as both tile and border
         const existing = colorMap.get(mask.color);
-        colorMap.set(mask.color, { 
-          ...existing, 
+        colorMap.set(mask.color, {
+          ...existing,
           hasBorder: true,
-          borderMask: mask 
+          borderMask: mask
         });
       } else {
         // If color doesn't exist, add it as border only
-        colorMap.set(mask.color, { 
-          type: 'border', 
+        colorMap.set(mask.color, {
+          type: 'border',
           mask,
           hasBorder: true,
-          borderMask: mask 
+          borderMask: mask
         });
       }
     });
@@ -134,7 +137,7 @@ const ColorEditor = ({ tile }) => {
         <h4 className="text-md mb-2 font-light font-poppins text-center lg:text-left uppercase tracking-wide">
           Edit Tile : {tile.name}
         </h4>
-        
+
         {/* Tile Preview */}
         <div className="mb-4 aspect-square max-w-xs mx-auto lg:mx-0 relative">
           <div
@@ -146,14 +149,17 @@ const ColorEditor = ({ tile }) => {
             }}
           >
             {/* Border Image */}
-            {selectedBorder && (
+            {selectedBorder && borderMasks && borderMasks.length > 0 && (
               <img
-                src={selectedBorder}
-                alt="Selected Border"
-                className="absolute inset-0 w-full h-full pointer-events-none"
+                src={borderMasks[0].image || selectedBorder}
+                alt="Tile Border"
+                className="absolute left-1/2 top-1/2 pointer-events-none"
                 style={{
-                  objectFit: "contain",
-                  zIndex: 10,
+                  width: 1200,
+                  height: 500,
+                  transform: 'translate(-50%, -50%)',
+                  objectFit: 'contain',
+                  zIndex: 10
                 }}
               />
             )}
@@ -218,6 +224,10 @@ const ColorEditor = ({ tile }) => {
                   maskPosition: "center",
                   WebkitMaskRepeat: "no-repeat",
                   maskRepeat: "no-repeat",
+                  width: "100%",
+                  height: "100%",
+                  top: "0",
+                  left: "0",
                   zIndex: 7,
                   pointerEvents: "none",
                 }}
@@ -228,7 +238,7 @@ const ColorEditor = ({ tile }) => {
 
         {/* Add/Remove Border Button */}
         <div className="mb-4 flex justify-center items-center lg:justify-start lg:items-start gap-2">
-          <button 
+          <button
             className="flex justify-center items-center gap-2 bg-black hover:bg-black/90 text-white font-poppins font-light py-2 px-4 rounded-md hover:border hover:border-red-500 hover:shadow-md hover:shadow-red-500 transition duration-300 ease-in-out"
             onClick={handleAddOrRemoveBorders}
           >
@@ -244,11 +254,10 @@ const ColorEditor = ({ tile }) => {
             {Array.from(getUniqueColors().entries()).map(([color, data], index) => (
               <button
                 key={`color-used-${index}-${color}`}
-                className={`w-6 h-6 border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500 ${
-                  selectedMaskColor === color
+                className={`w-6 h-6 border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500 ${selectedMaskColor === color
                     ? "border-black ring-1 ring-offset-1 ring-red-500"
                     : "border-gray-200 hover:border-red-500"
-                } ${data.hasBorder ? 'rounded-md' : 'rounded-full'}`}
+                  } ${data.hasBorder ? 'rounded-md' : 'rounded-full'}`}
                 style={{ backgroundColor: color }}
                 title={`${color}${data.hasBorder ? ' (Border)' : ' (Tile)'}`}
                 onClick={() => handleColorUsedClick(color)}
@@ -262,11 +271,10 @@ const ColorEditor = ({ tile }) => {
           {allAvailableColors.map((paletteColor, index) => (
             <button
               key={`palette-color-${index}-${paletteColor}`}
-              className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                selectedMaskColor === paletteColor
+              className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 ${selectedMaskColor === paletteColor
                   ? "border-black ring-1 ring-offset-1 ring-red-500"
                   : "border-transparent hover:border-red-500"
-              }`}
+                }`}
               style={{ backgroundColor: paletteColor }}
               title={paletteColor}
               onClick={() => handlePaletteColorSelect(paletteColor)}

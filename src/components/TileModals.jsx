@@ -9,6 +9,34 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
   const previewRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [loadedImages, setLoadedImages] = useState(new Map());
+
+  // Size conversion logic
+  const sizeToPx = {
+    "8x8": 8,    // 8 inches
+    "12x12": 12, // 12 inches
+  };
+
+  // Convert size to pixels for display
+  const getTileSizeInPx = (size) => {
+    const inches = sizeToPx[size] || 12;
+    // Reverse the scale - larger number for smaller tiles
+    // 8x8 should be largest, 16x16 should be smallest
+    const scale = 96 - (inches * 4); // This will give us 64px for 8x8, 48px for 12x12
+    return `${scale}px`;
+  };
+
+  // Get the actual pixel size for the current tile
+  const tileBgSize = getTileSizeInPx(tileConfig?.size);
+  const tileSizePx = tileBgSize;
+
+  const thicknessToPx = {
+    none: "0px",
+    thin: "2px",
+    thick: "6px",
+  };
+  const groutThicknessPx = thicknessToPx[tileConfig?.thickness] || "2px";
 
   // Reset form when modal is closed
   useEffect(() => {
@@ -18,6 +46,149 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
     }
   }, [isOpen, reset]);
 
+  // Function to load and cache images
+  const loadImage = (src) => {
+    if (loadedImages.has(src)) {
+      return Promise.resolve(loadedImages.get(src));
+    }
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+
+      img.onload = () => {
+        loadedImages.set(src, img);
+        resolve(img);
+      };
+
+      img.onerror = (e) => {
+        console.error('Error loading image:', src, e);
+        reject(new Error(`Failed to load image: ${src}`));
+      };
+
+      img.src = src;
+    });
+  };
+
+  // Function to draw tiles on canvas
+  const drawTilesOnCanvas = async (canvas, ctx) => {
+    if (!canvas || !tileConfig?.tile) return;
+
+    // Get the actual size in inches
+    const sizeInInches = sizeToPx[tileConfig.size] || 12;
+
+    // Reverse the grid size logic
+    // Smaller tiles (16x16) should show more tiles, larger tiles (8x8) should show fewer
+    const gridSize = Math.max(2, Math.ceil(sizeInInches / 4));
+    const tileSize = canvas.width / gridSize;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    try {
+      // Load base tile image
+      let baseImage = null;
+      if (tileConfig.tile.image) {
+        try {
+          baseImage = await loadImage(tileConfig.tile.image);
+        } catch (error) {
+          console.error('Failed to load base tile image:', error);
+          return;
+        }
+      }
+
+      // Load mask images
+      const maskImages = [];
+      if (tileConfig.tile.masks && tileConfig.tile.masks.length > 0) {
+        for (const mask of tileConfig.tile.masks) {
+          if (mask.image) {
+            try {
+              const maskImg = await loadImage(mask.image);
+              maskImages.push({ image: maskImg, mask });
+            } catch (error) {
+              console.error('Failed to load mask image:', error);
+            }
+          }
+        }
+      }
+
+      // Draw tiles in a grid pattern
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          const x = col * tileSize;
+          const y = row * tileSize;
+
+          // Draw base tile with proper scaling
+          if (baseImage) {
+            ctx.save();
+            // Maintain aspect ratio while scaling
+            const scale = Math.min(tileSize / baseImage.width, tileSize / baseImage.height);
+            const scaledWidth = baseImage.width * scale;
+            const scaledHeight = baseImage.height * scale;
+
+            const offsetX = (tileSize - scaledWidth) / 2;
+            const offsetY = (tileSize - scaledHeight) / 2;
+
+            ctx.drawImage(baseImage, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
+            ctx.restore();
+          }
+
+          // Draw masks with proper scaling
+          maskImages.forEach(({ image, mask }) => {
+            ctx.save();
+            const scale = Math.min(tileSize / image.width, tileSize / image.height);
+            const scaledWidth = image.width * scale;
+            const scaledHeight = image.height * scale;
+            const offsetX = (tileSize - scaledWidth) / 2;
+            const offsetY = (tileSize - scaledHeight) / 2;
+
+            ctx.globalCompositeOperation = 'source-in';
+            ctx.drawImage(image, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
+            ctx.globalCompositeOperation = 'source-atop';
+            ctx.fillStyle = mask.color;
+            ctx.fillRect(x, y, tileSize, tileSize);
+            ctx.restore();
+          });
+
+          // Draw grout with proper scaling
+          if (tileConfig.thickness !== "none") {
+            const groutWidth = parseInt(groutThicknessPx);
+            ctx.fillStyle = tileConfig.groutColor || '#333333';
+            // Vertical grout
+            ctx.fillRect(x - groutWidth / 2, y, groutWidth, tileSize);
+            // Horizontal grout
+            ctx.fillRect(x, y - groutWidth / 2, tileSize, groutWidth);
+          }
+        }
+      }
+
+      // Add size indicator with more visible styling
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText(`${sizeInInches}" x ${sizeInInches}"`, 20, 40);
+      ctx.restore();
+
+    } catch (error) {
+      console.error('Error in drawing process:', error);
+    }
+  };
+
+  // Effect to draw on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size to maintain aspect ratio
+    canvas.width = 800;
+    canvas.height = 800;
+
+    drawTilesOnCanvas(canvas, ctx);
+  }, [tileConfig]);
+
   const tileSizes = [
     { value: "8x8", label: "8\" x 8\"" },
     { value: "12x12", label: "12\" x 12\"" },
@@ -25,37 +196,48 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
     { value: "custom", label: "Custom Size" }
   ];
 
+  // Add this function before generatePDF
+  const ensureCanvasDrawn = async (canvas) => {
+    return new Promise((resolve) => {
+      if (canvas.getContext('2d').getImageData(0, 0, 1, 1).data[3] !== 0) {
+        resolve();
+      } else {
+        setTimeout(() => ensureCanvasDrawn(canvas), 100);
+      }
+    });
+  };
+
   const generatePDF = async (formData) => {
     try {
+      console.log('Starting PDF generation...');
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 20;
 
       // Add logo Header & Company Information
-      const logoX = margin;
-      const titleX = pageWidth / 2;
-      const addressX = pageWidth - margin;
+      try {
+        const logoUrl = "/Images/logo.png";
+        pdf.addImage(logoUrl, 'PNG', margin, 15, 30, 30);
+        console.log('Logo added successfully');
+      } catch (error) {
+        console.error('Error adding logo:', error);
+      }
 
-      // Logo (smaller to fit in one line)
-      const logoUrl = "/Images/logo.png";
-      pdf.addImage(logoUrl, 'PNG', logoX, 15, 30, 30); // Reduced from 40x40 to 30x30
+      // Title and company info
+      pdf.setFontSize(14);
+      pdf.text("Tile Configuration Details", pageWidth / 2, 30, { align: "center" });
 
-      // Title (smaller font size to fit)
-      pdf.setFontSize(14); // Reduced from 18
-      pdf.text("Tile Configuration Details", titleX, 30, { align: "center" });
-
-      // Right-Aligned Company Info (more compact)
-      pdf.setFontSize(8); // Smaller font for compact display
-      pdf.text("1325 Exchange Drive", addressX, 20, { align: "right" });
-      pdf.text("Richardson, TX 75081", addressX, 25, { align: "right" });
-      pdf.text("Phone: 214-352-0000", addressX, 30, { align: "right" });
+      pdf.setFontSize(8);
+      pdf.text("1325 Exchange Drive", pageWidth - margin, 20, { align: "right" });
+      pdf.text("Richardson, TX 75081", pageWidth - margin, 25, { align: "right" });
+      pdf.text("Phone: 214-352-0000", pageWidth - margin, 30, { align: "right" });
 
       // Draw a horizontal line below the header
-      pdf.setDrawColor(139, 0, 0); // Dark Red RGB color for the line
+      pdf.setDrawColor(139, 0, 0);
       pdf.line(margin, 60, pageWidth - margin, 60);
 
-      let yPosition = 50;
+      let yPosition = 80;
 
       // Personal Information Section
       pdf.setFontSize(16);
@@ -82,125 +264,128 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       // Tile Information Section
       pdf.setFontSize(16);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("Tile Information", margin, yPosition);
+      pdf.text("Tile Information", pageWidth / 2, yPosition, { align: "center" });
       yPosition += 10;
 
+      // Calculate the width for text and images
+      const textWidth = pageWidth * 0.4;
+      const imageWidth = pageWidth * 0.5;
+      const imageStartX = pageWidth - imageWidth - margin;
+
+      // Tile Information text on the left
       pdf.setFontSize(12);
       pdf.setTextColor(51, 51, 51);
       const tileInfo = [
         { label: "Tile Name", value: tileConfig?.tile?.name || 'N/A' },
         { label: "Quantity", value: formData.quantity },
         { label: "Size", value: formData.tileSize },
-        { label: "Color", value: tileConfig?.color || 'N/A' },
+        { label: "Color", value: tileConfig?.tile?.color || tileConfig?.color || 'N/A' },
         { label: "Grout Color", value: tileConfig?.groutColor || 'N/A' },
         { label: "Grout Thickness", value: tileConfig?.thickness || 'N/A' },
         { label: "Environment", value: tileConfig?.environment?.label || 'N/A' }
       ];
 
-      tileInfo.forEach((info, index) => {
-        if (yPosition > pageHeight - 50 && index > 0) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-        pdf.text(`${info.label}: ${info.value}`, margin, yPosition);
-        yPosition += 8;
+      let textYPosition = yPosition;
+      let imageYPosition = yPosition;
+
+      tileInfo.forEach(info => {
+        pdf.text(`${info.label}: ${info.value}`, margin, textYPosition);
+        textYPosition += 8;
       });
 
-      yPosition += 10;
-
-      // Add tile previews
+      // Add tile previews on the right
       if (previewRef.current) {
+        console.log('Processing previews...');
         try {
-          // Get all preview sections
           const previewSections = previewRef.current.querySelectorAll('.border.rounded-lg');
 
           for (let i = 0; i < previewSections.length; i++) {
-            // Check if we need a new page
-            if (yPosition > pageHeight - 100) {
-              pdf.addPage();
-              yPosition = margin;
-            }
-
-            // Add section title
-            const title = previewSections[i].querySelector('h3')?.textContent || '';
-            pdf.setFontSize(16);
-            pdf.setTextColor(0, 0, 0);
-            pdf.text(title, margin, yPosition);
-            yPosition += 10;
-
-            // Get the preview container
+            console.log(`Processing preview section ${i + 1}...`);
             const previewContainer = previewSections[i].querySelector('.w-full.rounded-lg.overflow-hidden.relative');
+            
             if (previewContainer) {
-              // Set a fixed size for the preview
-              const previewWidth = pageWidth - (margin * 2);
-              const previewHeight = previewWidth * 0.4;
+              const previewHeight = imageWidth * 0.4;
 
-              // Wait for images to load
-              await Promise.all(
-                Array.from(previewRef.current.querySelectorAll("img")).map(img =>
-                  img.complete ? Promise.resolve() : new Promise(resolve => { img.onload = resolve; })
-                )
-              );
-
-              // Capture the preview with improved settings
-              const canvas = await html2canvas(previewContainer, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                logging: true,
-                onclone: (clonedDoc) => {
-                  // Ensure all images are loaded in the cloned document
-                  const images = clonedDoc.getElementsByTagName('img');
-                  Array.from(images).forEach(img => {
-                    img.crossOrigin = 'anonymous';
-                    // Force image to load
-                    if (!img.complete) {
-                      img.src = img.src;
-                    }
+              try {
+                // Wait for all images to load
+                const images = previewContainer.getElementsByTagName('img');
+                await Promise.all(Array.from(images).map(img => {
+                  if (img.complete) return Promise.resolve();
+                  return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
                   });
-                }
-              });
+                }));
 
-              // Add the preview to the PDF
-              const imgData = canvas.toDataURL('image/png', 1.0);
-              pdf.addImage(imgData, 'PNG', margin, yPosition, previewWidth, previewHeight);
-              yPosition += previewHeight + 20;
+                // Use html2canvas to capture the preview container
+                const canvas = await html2canvas(previewContainer, {
+                  scale: 2,
+                  useCORS: true,
+                  allowTaint: true,
+                  backgroundColor: '#ffffff',
+                  logging: true,
+                  onclone: (clonedDoc) => {
+                    // Ensure all styles are preserved
+                    const clonedContainer = clonedDoc.querySelector('.w-full.rounded-lg.overflow-hidden.relative');
+                    if (clonedContainer) {
+                      clonedContainer.style.width = `${previewContainer.offsetWidth}px`;
+                      clonedContainer.style.height = `${previewContainer.offsetHeight}px`;
+                    }
+                  }
+                });
+
+                // Add the captured image to the PDF
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                pdf.addImage(imgData, 'PNG', imageStartX, imageYPosition, imageWidth, previewHeight);
+
+                imageYPosition += previewHeight + 20;
+
+                if (imageYPosition > pageHeight - 50) {
+                  pdf.addPage();
+                  imageYPosition = margin;
+                }
+
+                console.log(`Preview section ${i + 1} processed successfully`);
+              } catch (error) {
+                console.error(`Error processing preview section ${i + 1}:`, error);
+                continue;
+              }
             }
           }
         } catch (error) {
-          console.error('Error generating preview:', error);
+          console.error('Error processing previews:', error);
         }
       }
 
-      // Add thank you message if there's space
-      if (yPosition < pageHeight - 50) {
+      // Add thank you message
+      const lastYPosition = Math.max(textYPosition, imageYPosition) + 20;
+      if (lastYPosition < pageHeight - 50) {
         pdf.setFontSize(16);
-        pdf.setTextColor(139, 0, 0); // Dark Red RGB for "Thank You!" message
-        pdf.text("Thank You!", pageWidth / 2, yPosition, { align: "center" });
-        yPosition += 10;
+        pdf.setTextColor(139, 0, 0);
+        pdf.text("Thank You!", pageWidth / 2, lastYPosition, { align: "center" });
+        let thankYouY = lastYPosition + 10;
 
         pdf.setFontSize(12);
         pdf.setTextColor(51, 51, 51);
         const thankYouMessage = "Thank you for shopping with us! We appreciate your business and hope you love your new tile selection. If you have any questions or need assistance, please don't hesitate to contact us.";
         const splitMessage = pdf.splitTextToSize(thankYouMessage, pageWidth - (margin * 2));
-        pdf.text(splitMessage, pageWidth / 2, yPosition, { align: "center" });
-        yPosition += splitMessage.length * 8 + 10;
+        pdf.text(splitMessage, pageWidth / 2, thankYouY, { align: "center" });
+        thankYouY += splitMessage.length * 8 + 10;
 
-        // Add contact information with dark red color
         pdf.setFontSize(10);
-        pdf.setTextColor(139, 0, 0); // Dark Red for contact information
-        pdf.text("Contact Us:", pageWidth / 2, yPosition, { align: "center" });
-        yPosition += 8;
-        pdf.text("Email: support@tilesimulator.com", pageWidth / 2, yPosition, { align: "center" });
-        yPosition += 8;
-        pdf.text("Phone: 214-352-0000", pageWidth / 2, yPosition, { align: "center" });
+        pdf.setTextColor(139, 0, 0);
+        pdf.text("Contact Us:", pageWidth / 2, thankYouY, { align: "center" });
+        thankYouY += 8;
+        pdf.text("Email: support@tilesimulator.com", pageWidth / 2, thankYouY, { align: "center" });
+        thankYouY += 8;
+        pdf.text("Phone: 214-352-0000", pageWidth / 2, thankYouY, { align: "center" });
       }
-      // Generate blob and create download link
+
+      console.log('Generating PDF blob...');
       const pdfBlob = pdf.output('blob');
       const blobUrl = URL.createObjectURL(pdfBlob);
 
-      // Create and trigger download link
+      console.log('Creating download link...');
       const downloadLink = document.createElement('a');
       downloadLink.href = blobUrl;
       downloadLink.download = 'tile-configuration.pdf';
@@ -211,8 +396,10 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(blobUrl);
 
-      // Send email to store owner automatically
-      const storeOwnerEmail = "store@tilesimulator.com"; // Replace with actual store owner email
+      console.log('PDF generation completed successfully');
+
+      // Send email
+      const storeOwnerEmail = "store@tilesimulator.com";
       const emailSubject = "New Tile Configuration Request";
       const emailBody = `
         New tile configuration request received:
@@ -227,13 +414,12 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         Tile Name: ${tileConfig?.tile?.name || 'N/A'}
         Quantity: ${formData.quantity}
         Size: ${formData.tileSize}
-        Color: ${tileConfig?.color || 'N/A'}
+        Color: ${tileConfig?.tile?.color || tileConfig?.color || 'N/A'}
         Grout Color: ${tileConfig?.groutColor || 'N/A'}
         Grout Thickness: ${tileConfig?.thickness || 'N/A'}
         Environment: ${tileConfig?.environment?.label || 'N/A'}
       `;
 
-      // Send email using a server endpoint
       try {
         const response = await fetch('/api/send-email', {
           method: 'POST',
@@ -253,13 +439,12 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         }
       } catch (error) {
         console.error('Error sending email:', error);
-        // Fallback to mailto if server endpoint fails
         const mailtoLink = `mailto:${storeOwnerEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
         window.location.href = mailtoLink;
       }
 
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error in PDF generation:', error);
       alert('There was an error generating the PDF. Please try again.');
     }
   };
@@ -323,7 +508,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
             {/* Configuration Details */}
             <div className="rounded-lg pt-4 font-poppins font-light mt-4 mb-4 text-sm space-y-2">
-              <h3 className="font-bold  font-semibold font-poppins uppercase text-lg ">Selected Configuration:</h3>
+              <h3 className="font-semibold font-poppins uppercase text-lg ">Selected Configuration:</h3>
               <p>Tile Name: {tileConfig?.tile?.name || 'N/A'}</p>
               <p>Tile Size: {tileConfig?.size}</p>
               <p>Color: {tileConfig?.color}</p>
@@ -336,7 +521,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
             <div ref={previewRef} className="grid grid-cols-1 sm:grid-cols-2 space-y-6">
               {/* Tile Pattern Without Environment */}
               <div className="rounded-lg pt-4">
-                <h3 className="font-bold mb-4 font-light font-poppins">Tile Pattern</h3>
+                <h3 className="mb-4 font-light font-poppins">Tile Pattern</h3>
                 <div
                   className="w-full rounded-lg overflow-hidden relative"
                   style={{
@@ -346,90 +531,55 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     minHeight: "200px",
                   }}
                 >
-                  {/* Tile pattern */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundImage: `url(${tileConfig?.tile?.img})`,
-                      backgroundSize: tileConfig?.size ? `${tileConfig.size}px ${tileConfig.size}px` : '100px 100px',
-                      backgroundRepeat: "repeat",
-                      backgroundPosition: "center",
-                      opacity: 1,
-                      zIndex: 1,
-                      backgroundColor: tileConfig?.color || '#ffffff',
-                    }}
-                  />
-                  {/* Grout overlay */}
-                  {tileConfig?.thickness !== "none" && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        pointerEvents: "none",
-                        zIndex: 2,
-                        backgroundImage: `
-                          repeating-linear-gradient(
-                            to right,
-                            ${tileConfig?.groutColor || '#333333'},
-                            ${tileConfig?.groutColor || '#333333'} ${tileConfig?.thickness === "thick" ? '6px' : '2px'},
-                            transparent ${tileConfig?.thickness === "thick" ? '6px' : '2px'},
-                            transparent ${tileConfig?.size || '100px'}
-                          ),
-                          repeating-linear-gradient(
-                            to bottom,
-                            ${tileConfig?.groutColor || '#333333'},
-                            ${tileConfig?.groutColor || '#333333'} ${tileConfig?.thickness === "thick" ? '6px' : '2px'},
-                            transparent ${tileConfig?.thickness === "thick" ? '6px' : '2px'},
-                            transparent ${tileConfig?.size || '100px'}
-                          )
-                        `,
-                        backgroundSize: `${tileConfig?.size || '100px'} ${tileConfig?.size || '100px'}`,
-                        backgroundRepeat: "repeat",
-                        backgroundPosition: "center",
-                        opacity: 1,
-                      }}
+                  {/* Original Tile Image */}
+                  <div className="relative w-full max-h-[500px]">
+                    <canvas
+                      ref={canvasRef}
+                      className="w-full h-full object-contain bg-gray-100"
                     />
-                  )}
-                </div>
-              </div>
 
-              {/* Tile Pattern With Environment */}
-              {tileConfig?.environment && (
-                <div className="rounded-lg p-4">
-                  <h3 className="font-bold mb-4 font-light font-poppins">Tile in Environment</h3>
-                  <div
-                    className="w-full rounded-lg overflow-hidden relative"
-                    style={{
-                      position: "relative",
-                      overflow: "hidden",
-                      height: "auto",
-                      minHeight: "200px",
-                    }}
-                  >
-                    {/* Tile pattern */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundImage: `url(${tileConfig?.tile?.img})`,
-                        backgroundSize: tileConfig?.size ? `${tileConfig.size}px ${tileConfig.size}px` : '100px 100px',
-                        backgroundRepeat: "repeat",
-                        backgroundPosition: "center",
-                        opacity: 1,
-                        zIndex: 1,
-                        backgroundColor: tileConfig?.color || '#ffffff',
-                      }}
-                    />
+                    {/* Mask Layers */}
+                    {tileConfig?.tile?.masks && tileConfig.tile.masks.map(mask => (
+                      <div
+                        key={mask.id}
+                        className="absolute inset-0"
+                        style={{
+                          backgroundColor: mask.color,
+                          maskImage: `url(${mask.image})`,
+                          WebkitMaskImage: `url(${mask.image})`,
+                          maskSize: tileBgSize,
+                          WebkitMaskSize: tileBgSize,
+                          maskPosition: 'center',
+                          WebkitMaskPosition: 'center',
+                          maskRepeat: 'repeat',
+                          WebkitMaskRepeat: 'repeat',
+                          mixBlendMode: 'source-in',
+                          zIndex: 1
+                        }}
+                      />
+                    ))}
+
+                    {/* Border Mask Layers */}
+                    {tileConfig?.borderMasks && tileConfig.borderMasks.map(mask => (
+                      <div
+                        key={mask.maskId}
+                        className="absolute inset-0"
+                        style={{
+                          backgroundColor: mask.color,
+                          maskImage: `url(${mask.image})`,
+                          WebkitMaskImage: `url(${mask.image})`,
+                          maskSize: '100%',
+                          WebkitMaskSize: '100%',
+                          maskPosition: 'center',
+                          WebkitMaskPosition: 'center',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat',
+                          mixBlendMode: 'source-in',
+                          zIndex: 3
+                        }}
+                      />
+                    ))}
+
                     {/* Grout overlay */}
                     {tileConfig?.thickness !== "none" && (
                       <div
@@ -440,41 +590,142 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                           right: 0,
                           bottom: 0,
                           pointerEvents: "none",
-                          zIndex: 2,
                           backgroundImage: `
                             repeating-linear-gradient(
                               to right,
                               ${tileConfig?.groutColor || '#333333'},
-                              ${tileConfig?.groutColor || '#333333'} ${tileConfig?.thickness === "thick" ? '6px' : '2px'},
-                              transparent ${tileConfig?.thickness === "thick" ? '6px' : '2px'},
-                              transparent ${tileConfig?.size || '100px'}
+                              ${tileConfig?.groutColor || '#333333'} ${groutThicknessPx},
+                              transparent ${groutThicknessPx},
+                              transparent ${tileSizePx}
                             ),
                             repeating-linear-gradient(
                               to bottom,
                               ${tileConfig?.groutColor || '#333333'},
-                              ${tileConfig?.groutColor || '#333333'} ${tileConfig?.thickness === "thick" ? '6px' : '2px'},
-                              transparent ${tileConfig?.thickness === "thick" ? '6px' : '2px'},
-                              transparent ${tileConfig?.size || '100px'}
+                              ${tileConfig?.groutColor || '#333333'} ${groutThicknessPx},
+                              transparent ${groutThicknessPx},
+                              transparent ${tileSizePx}
                             )
                           `,
-                          backgroundSize: `${tileConfig?.size || '100px'} ${tileConfig?.size || '100px'}`,
+                          backgroundSize: `${tileSizePx} ${tileSizePx}`,
                           backgroundRepeat: "repeat",
                           backgroundPosition: "center",
                           opacity: 1,
+                          zIndex: 2
                         }}
                       />
                     )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tile Pattern With Environment */}
+              {tileConfig?.environment && (
+                <div className="rounded-lg p-4">
+                  <h3 className="mb-4 font-light font-poppins">Tile in Environment</h3>
+                  <div
+                    className="w-full rounded-lg overflow-hidden relative"
+                    style={{
+                      position: "relative",
+                      overflow: "hidden",
+                      height: "auto",
+                      minHeight: "200px",
+                    }}
+                  >
                     {/* Environment background */}
                     <img
                       src={tileConfig.environment.image}
                       alt="Room preview"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover absolute inset-0"
                       style={{
-                        position: "relative",
-                        mixBlendMode: "normal",
-                        zIndex: 3,
+                        zIndex: 3
                       }}
                     />
+                    {/* Original Tile Image */}
+                    <div className="relative w-full max-h-[500px]">
+                      <canvas
+                        ref={canvasRef}
+                        className="w-full h-full object-contain bg-gray-100"
+                      />
+
+                      {/* Mask Layers */}
+                      {tileConfig?.tile?.masks && tileConfig.tile.masks.map(mask => (
+                        <div
+                          key={mask.id}
+                          className="absolute inset-0"
+                          style={{
+                            backgroundColor: mask.color,
+                            maskImage: `url(${mask.image})`,
+                            WebkitMaskImage: `url(${mask.image})`,
+                            maskSize: tileBgSize,
+                            WebkitMaskSize: tileBgSize,
+                            maskPosition: 'center',
+                            WebkitMaskPosition: 'center',
+                            maskRepeat: 'repeat',
+                            WebkitMaskRepeat: 'repeat',
+                            mixBlendMode: 'source-in',
+                            opacity: 0.8,
+                            zIndex: 1
+                          }}
+                        />
+                      ))}
+
+                      {/* Border Mask Layers */}
+                      {tileConfig?.borderMasks && tileConfig.borderMasks.map(mask => (
+                        <div
+                          key={mask.maskId}
+                          className="absolute inset-0"
+                          style={{
+                            backgroundColor: mask.color,
+                            maskImage: `url(${mask.image})`,
+                            WebkitMaskImage: `url(${mask.image})`,
+                            maskSize: '100%',
+                            WebkitMaskSize: '100%',
+                            maskPosition: 'center',
+                            WebkitMaskPosition: 'center',
+                            maskRepeat: 'no-repeat',
+                            WebkitMaskRepeat: 'no-repeat',
+                            mixBlendMode: 'source-in',
+                            opacity: 0.8,
+                            zIndex: 3
+                          }}
+                        />
+                      ))}
+
+                      {/* Grout overlay */}
+                      {tileConfig?.thickness !== "none" && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            pointerEvents: "none",
+                            backgroundImage: `
+                              repeating-linear-gradient(
+                                to right,
+                                ${tileConfig?.groutColor || '#333333'},
+                                ${tileConfig?.groutColor || '#333333'} ${groutThicknessPx},
+                                transparent ${groutThicknessPx},
+                                transparent ${tileSizePx}
+                              ),
+                              repeating-linear-gradient(
+                                to bottom,
+                                ${tileConfig?.groutColor || '#333333'},
+                                ${tileConfig?.groutColor || '#333333'} ${groutThicknessPx},
+                                transparent ${groutThicknessPx},
+                                transparent ${tileSizePx}
+                              )
+                            `,
+                            backgroundSize: `${tileSizePx} ${tileSizePx}`,
+                            backgroundRepeat: "repeat",
+                            backgroundPosition: "center",
+                            opacity: 1,
+                            zIndex: 2
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
