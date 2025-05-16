@@ -267,7 +267,7 @@ const ColorEditor = ({ tile }) => {
         </div>
 
         {/* Color Palette */}
-        <div className="w-full flex flex-wrap justify-center gap-2 bg-gray-100 rounded-lg p-2 shadow-inner max-w-xs mx-auto lg:mx-0">
+        <div className="w-full flex flex-wrap justify-center gap-2 bg-gray-100 rounded-lg pt-2 shadow-inner max-w-xs mx-auto lg:mx-0">
           {allAvailableColors.map((paletteColor, index) => (
             <button
               key={`palette-color-${index}-${paletteColor}`}

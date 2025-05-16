@@ -371,7 +371,7 @@ const TileCanvasView = ({
               />
               <button
                 onClick={() => setActiveEnv(null)}
-                className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50"
+                className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50 hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out"
               >
                 <IoMdClose size={20} />
               </button>
@@ -380,7 +380,7 @@ const TileCanvasView = ({
         </div>
 
         <button
-          className="absolute bottom-2 right-2 text-white bg-black p-1 rounded z-50"
+          className="absolute bottom-2 right-2 text-white bg-black p-1 rounded z-50 hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? <MdCloseFullscreen size={20} /> : <MdFullscreen size={20} />}
@@ -394,7 +394,7 @@ const TileCanvasView = ({
             <div className="absolute bottom-2 right-2 z-50">
               <button
                 onClick={() => setIsExpanded(false)}
-                className="bg-black bg-opacity-70 text-white rounded-full p-1 hover:bg-opacity-90 transition"
+                className="bg-black bg-opacity-70 text-white rounded-full p-1 hover:bg-opacity-90 transition "
               >
                 <MdCloseFullscreen size={20} />
               </button>
@@ -470,7 +470,7 @@ const TileCanvasView = ({
                     />
                     <button
                       onClick={() => setActiveEnv(null)}
-                      className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50"
+                      className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50  hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out"
                     >
                       <IoMdClose size={20} />
                     </button>

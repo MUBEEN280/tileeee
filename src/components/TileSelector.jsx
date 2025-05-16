@@ -40,7 +40,7 @@ const handleTileClick = (tile) => {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-3  lg:grid-cols-2  gap-2 flex-1 bg-gray-100 p-2 rounded-lg font-light font-poppins overflow-x-auto custom-scrollbar lg:overflow-y-auto">
+        <div className="grid grid-cols-4  lg:grid-cols-1 xl:grid-cols-2  gap-2 flex-1 bg-gray-100 p-2 rounded-lg font-light font-poppins overflow-x-auto custom-scrollbar lg:overflow-y-auto">
           {tileCollections[selectedCategory ].map((tile) => (
             <div
               key={tile.id}
