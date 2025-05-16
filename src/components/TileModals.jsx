@@ -33,37 +33,29 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       const margin = 20;
 
       // Add logo Header & Company Information
-     // Header Section Heights and X positions
-   const logoX = margin;
-      const centerX = pageWidth / 2;
-      const rightX = pageWidth - margin;
+      const logoX = margin;
+      const titleX = pageWidth / 2;
+      const addressX = pageWidth - margin;
 
-      // Logo
-      const logoUrl = '/Images/logo.png'; // Make sure this path is correct and accessible
-      pdf.addImage(logoUrl, 'PNG', logoX, 15, 40, 40);
+      // Logo (smaller to fit in one line)
+      const logoUrl = "/Images/logo.png";
+      pdf.addImage(logoUrl, 'PNG', logoX, 15, 30, 30); // Reduced from 40x40 to 30x30
 
-      // Title - Centered
-      pdf.setFontSize(18);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("Tile Configuration Details", centerX, 25, { align: "center" });
+      // Title (smaller font size to fit)
+      pdf.setFontSize(14); // Reduced from 18
+      pdf.text("Tile Configuration Details", titleX, 30, { align: "center" });
 
-      // Right-Aligned Company Info
-      pdf.setFontSize(10);
-      const rightText = [
-        "1325 Exchange Drive",
-        "Richardson, TX 75081",
-        "Phone: 214-352-0000",
-        "Fax: 215-352-0002"
-      ];
-      rightText.forEach((line, idx) => {
-        pdf.text(line, rightX, 15 + (idx * 6), { align: "right" });
-      });
+      // Right-Aligned Company Info (more compact)
+      pdf.setFontSize(8); // Smaller font for compact display
+      pdf.text("1325 Exchange Drive", addressX, 20, { align: "right" });
+      pdf.text("Richardson, TX 75081", addressX, 25, { align: "right" });
+      pdf.text("Phone: 214-352-0000", addressX, 30, { align: "right" });
 
       // Draw a horizontal line below the header
       pdf.setDrawColor(139, 0, 0); // Dark Red RGB color for the line
       pdf.line(margin, 60, pageWidth - margin, 60);
 
-      let yPosition = 70;
+      let yPosition = 50;
 
       // Personal Information Section
       pdf.setFontSize(16);
@@ -105,7 +97,11 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         { label: "Environment", value: tileConfig?.environment?.label || 'N/A' }
       ];
 
-      tileInfo.forEach(info => {
+      tileInfo.forEach((info, index) => {
+        if (yPosition > pageHeight - 50 && index > 0) {
+          pdf.addPage();
+          yPosition = margin;
+        }
         pdf.text(`${info.label}: ${info.value}`, margin, yPosition);
         yPosition += 8;
       });
@@ -137,10 +133,14 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
             if (previewContainer) {
               // Set a fixed size for the preview
               const previewWidth = pageWidth - (margin * 2);
-              const previewHeight = previewWidth * 0.6;
+              const previewHeight = previewWidth * 0.4;
 
               // Wait for images to load
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              await Promise.all(
+                Array.from(previewRef.current.querySelectorAll("img")).map(img =>
+                  img.complete ? Promise.resolve() : new Promise(resolve => { img.onload = resolve; })
+                )
+              );
 
               // Capture the preview with improved settings
               const canvas = await html2canvas(previewContainer, {
@@ -174,7 +174,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       }
 
       // Add thank you message if there's space
-    if (yPosition < pageHeight - 100) {
+      if (yPosition < pageHeight - 50) {
         pdf.setFontSize(16);
         pdf.setTextColor(139, 0, 0); // Dark Red RGB for "Thank You!" message
         pdf.text("Thank You!", pageWidth / 2, yPosition, { align: "center" });

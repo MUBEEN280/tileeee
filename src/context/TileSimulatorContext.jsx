@@ -13,7 +13,7 @@ const tileCollections = {
       grout: 'cross',
       scale: 1,
       colorsUsed: [
-        '#1f1d1b','#151312','#c5a7b1','#91897e','#d2c4af'  
+        '#1f1d1b', '#151312', '#c5a7b1', '#91897e', '#d2c4af'
       ],
       masks: [
         {
@@ -21,7 +21,7 @@ const tileCollections = {
           name: 'Mask Pattern 1',
           image: '/Images/tiles/masks/Mask-1.png',
           color: '#1f1d1b',
-          availableColors: ['#0D1117','#1C1C1E','#2D3748','#1A202C','#202124','#171923',
+          availableColors: ['#0D1117', '#1C1C1E', '#2D3748', '#1A202C', '#202124', '#171923',
             '#4A5568',
             '#5C6370',
             '#718096',
@@ -386,78 +386,398 @@ const tileCollections = {
       shape: 'rectangle',
       grout: 'line',
       scale: 1,
-      colorsUsed: ['#000000', '#FFFFFF', '#A0AEC0', '#FFB300', '#718096'],
+      colorsUsed: ['#584a49', '#9e867a', '#5a4b48', '#ffffff', '#5a4b48','#584a49','#9a8073','#bccacd'],
       masks: [
         {
-          maskId: 'mask1',
+           maskId: 'mask1',
           name: 'Border Mask 1',
           image: '/Images/borders/bordersmask/Border1.png',
-          color: '#000000',
+          color: '#584a49',
           availableColors: [
-            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
-          maskId: 'mask2',
+           maskId: 'mask2',
           name: 'Border Mask 2',
           image: '/Images/borders/bordersmask/Border2.png',
-          color: '#FF5733',
+          color: '#9e867a',
           availableColors: [
-            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
-          maskId: 'mask3',
+           maskId: 'mask3',
           name: 'Border Mask 3',
           image: '/Images/borders/bordersmask/Border3.png',
-          color: '#3498DB',
+          color: '#5a4b48',
           availableColors: [
-            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
-          maskId: 'mask4',
+           maskId: 'mask4',
           name: 'Border Mask 4',
           image: '/Images/borders/bordersmask/Border4.png',
-          color: '#3498DB',
+          color: '#ffffff',
           availableColors: [
-            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
-          maskId: 'mask5',
+           maskId: 'mask5',
           name: 'Border Mask 5',
           image: '/Images/borders/bordersmask/Border5.png',
-          color: '#3498DB',
+          color: '#5a4b48',
           availableColors: [
-            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
-          maskId: 'mask6',
+           maskId: 'mask6',
           name: 'Border Mask 6',
           image: '/Images/borders/bordersmask/Border6.png',
-          color: '#3498DB',
+          color: '#584a49',
           availableColors: [
-            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
-          maskId: 'mask7',
-          name: 'Border Mask 6',
+           maskId: 'mask7',
+          name: 'Border Mask 7',
           image: '/Images/borders/bordersmask/Border7.png',
-          color: '#3498DB',
+          color: '#9a8073',
           availableColors: [
-            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
         {
-          maskId: 'mask8',
-          name: 'Border Mask 6',
+           maskId: 'mask8',
+          name: 'Border Mask 8',
           image: '/Images/borders/bordersmask/Border8.png',
-          color: '#3498DB',
+          color: '#bccacd',
           availableColors: [
-            '#F7FAFC', '#EDF2F7', '#E2E8F0', '#CBD5E0', '#A0AEC0', '#718096'
+            '#0D1117',
+            '#1C1C1E',
+            '#2D3748',
+            '#1A202C',
+            '#202124',
+            '#171923',
+            '#4A5568',
+            '#5C6370',
+            '#718096',
+            '#A0AEC0',
+            '#CBD5E0',
+            '#E2E8F0',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#FF6B6B',
+            '#FFB300',
+            '#00B894',
+            '#00BFFF',
+            '#FFD700',
+            '#FF00FF',
+            '#7D5FFF',
+            '#1ABC9C',
+            '#F39C12',
+            '#E91E63',
+            '#74B9FF',
+            '#55EFC4',
+            '#81ECEC',
+            '#A29BFE',
+            '#FFFFFF',
+            '#000000',
+            '#F5F5F5',
+            '#2C3E50',
+            '#ECF0F1',
           ]
         },
       ]
@@ -481,11 +801,9 @@ export const TileSimulatorProvider = ({ children }) => {
     return savedSize || "8x8";
   });
 
-  const [selectedBorder, setSelectedBorder] = useState(() => {
-    const savedBorder = localStorage.getItem('selectedBorder');
-    return savedBorder ? JSON.parse(savedBorder) : null;
-  });
+  const [selectedBorder, setSelectedBorder] = useState(null);
 
+  
   // New state for mask functionality
   const [selectedEnvironment, setSelectedEnvironment] = useState(() => {
     const savedEnv = localStorage.getItem('selectedEnvironment');
@@ -504,6 +822,13 @@ export const TileSimulatorProvider = ({ children }) => {
 
   const [tileMasks, setTileMasks] = useState(() => {
     const savedMasks = localStorage.getItem('tileMasks');
+    return savedMasks ? JSON.parse(savedMasks) : [];
+  });
+
+   const [selectedCategory, setSelectedCategory] = useState("Pattern Collection");
+
+  const [borderMasks, setBorderMasks] = useState(() => {
+    const savedMasks = localStorage.getItem('borderMasks');
     return savedMasks ? JSON.parse(savedMasks) : [];
   });
 
@@ -565,11 +890,56 @@ export const TileSimulatorProvider = ({ children }) => {
       return updatedMasks;
     });
   };
+
   const handleBorderSelect = (border) => {
     setSelectedBorder(border);
-    localStorage.setItem('selectedBorder', JSON.stringify(border));
+    // Find the border tile in the Border Collection
+    const borderTile = tileCollections["Border Collection"].find(tile => tile.image === border);
+    if (borderTile && borderTile.masks) {
+      // Initialize border masks with original colors
+      const initialMasks = borderTile.masks.map(mask => ({
+        ...mask,
+        color: mask.color // Use the original color from the border data
+      }));
+      setBorderMasks(initialMasks);
+      localStorage.setItem('borderMasks', JSON.stringify(initialMasks));
+    }
   };
 
+  const setBorderMaskColor = (maskId, color) => {
+    setBorderMasks(prevMasks => {
+      const updatedMasks = prevMasks.map(mask =>
+        mask.maskId === maskId
+          ? { ...mask, color }
+          : mask
+      );
+      localStorage.setItem('borderMasks', JSON.stringify(updatedMasks));
+      return updatedMasks;
+    });
+  };
+
+  // Update border masks when border changes
+  useEffect(() => {
+    if (selectedBorder) {
+      const borderTile = tileCollections["Border Collection"].find(tile => tile.image === selectedBorder);
+      if (borderTile?.masks) {
+        const savedMasks = localStorage.getItem('borderMasks');
+        if (savedMasks) {
+          setBorderMasks(JSON.parse(savedMasks));
+        } else {
+          const initialMasks = borderTile.masks.map(mask => ({
+            ...mask,
+            color: mask.color
+          }));
+          setBorderMasks(initialMasks);
+          localStorage.setItem('borderMasks', JSON.stringify(initialMasks));
+        }
+      }
+    } else {
+      setBorderMasks([]);
+      localStorage.removeItem('borderMasks');
+    }
+  }, [selectedBorder]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -578,9 +948,11 @@ export const TileSimulatorProvider = ({ children }) => {
     }
   }, [selectedTile]);
 
-  useEffect(() => {
+useEffect(() => {
     if (selectedBorder) {
       localStorage.setItem('selectedBorder', JSON.stringify(selectedBorder));
+    } else {
+      localStorage.removeItem('selectedBorder');
     }
   }, [selectedBorder]);
 
@@ -628,8 +1000,12 @@ export const TileSimulatorProvider = ({ children }) => {
         selectedBorder,
         setSelectedBorder,
         handleBorderSelect,
+        borderMasks,
+        setBorderMaskColor,
         availableTiles: Object.values(tileCollections).flat(),
-        tileCollections
+        tileCollections,
+         selectedCategory,
+        setSelectedCategory,
       }}
     >
       {children}

@@ -19,7 +19,9 @@ const TileSimulator = () => {
     groutThickness,
     setGroutThickness,
     tileMasks,
-    setTileMaskColor
+    setTileMaskColor,
+    borderMasks,
+    selectedBorder
   } = useTileSimulator();
 
   return (
@@ -28,7 +30,7 @@ const TileSimulator = () => {
       <div className="flex flex-col">
         <div className="text-center lg:text-left py-6">
           <div className="text-lg  tracking-widest font-poppins">TILE SELECTION</div>
-          <div className="text-sm italic text-gray-500 font-poppins font-light">(SCROLL FOR MORE OPTIONS)</div>
+          <hr className="bg-red-500 h-[2px] w-full my-3 rounded-full"/>
         </div>
         <div className="overflow-y-auto">
           <TileSelector onSelectTile={setSelectedTile} />
@@ -39,6 +41,7 @@ const TileSimulator = () => {
       <div className=" flex flex-col">
         <div className="text-center lg:text-left py-6">
           <div className="text-lg  tracking-widest font-poppins">COLOR EDITOR</div>
+          <hr className="bg-red-500 h-[2px] w-full my-3 rounded-full"/>
         </div>
         <div className="overflow-y-auto">
           {selectedTile && (
@@ -65,8 +68,9 @@ const TileSimulator = () => {
       <div className="flex flex-col">
         <div className="text-center lg:text-left py-6">
           <div className="text-lg font-light font-poppins">VIEW</div>
+          <hr className="bg-red-500 h-[2px] w-full my-3 rounded-full"/>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto mb-4">
           <TileCanvasView
             selectedTile={selectedTile}
             selectedColor={selectedColor}
@@ -75,6 +79,8 @@ const TileSimulator = () => {
             groutColor={groutColor}
             groutThickness={groutThickness}
             tileMasks={tileMasks}
+            borderMasks={borderMasks}
+            selectedBorder={selectedBorder}
           />
         </div>
       </div>

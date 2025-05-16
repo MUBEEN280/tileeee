@@ -25,7 +25,9 @@ const TileCanvasView = ({
   selectedEnvironment,
   groutColor: propGroutColor,
   groutThickness: propGroutThickness,
-  tileMasks
+  tileMasks,
+  borderMasks,
+  selectedBorder
 }) => {
   const [activeEnv, setActiveEnv] = useState(() => {
     const savedEnv = localStorage.getItem('activeEnv');
@@ -257,7 +259,7 @@ const TileCanvasView = ({
   }
 
   return (
-    <div className={`max-w-4xl mx-auto lg:mx-0 ${isExpanded ? "h-screen" : ""}`}>
+    <div className={`max-w-4xl mx-auto lg:mx-0 p-1 ${isExpanded ? "h-screen" : ""}`}>
       <h2 className="text-center lg:text-left font-light font-poppins  text-xl tracking-widest mb-2">TILE VISUALIZER</h2>
        <div className="relative mb-6">
         <div
@@ -270,12 +272,10 @@ const TileCanvasView = ({
         >
           {/* Original Tile Image */}
           {selectedTile && (
-            <div className="relative w-full h-full "
-            
-            >
+            <div className="relative w-full max-h-[500px]">
               <canvas
                 ref={canvasRef}
-                className="w-full h-full object-cover bg-gray-100"
+                className="w-full h-full object-contain bg-gray-100"
               />
 
               {/* Mask Layers */}
@@ -294,13 +294,33 @@ const TileCanvasView = ({
                     maskRepeat: 'repeat',
                     WebkitMaskRepeat: 'repeat',
                     mixBlendMode: 'source-in',
-                     zIndex: 1
+                    zIndex: 1
+                  }}
+                />
+              ))}
+
+              {/* Border Mask Layers */}
+              {selectedBorder && borderMasks && borderMasks.map(mask => (
+                <div
+                  key={mask.maskId}
+                  className="absolute inset-0"
+                  style={{
+                    backgroundColor: mask.color,
+                    maskImage: `url(${mask.image})`,
+                    WebkitMaskImage: `url(${mask.image})`,
+                    maskSize: '100%',
+                    WebkitMaskSize: '100%',
+                    maskPosition: 'center',
+                    WebkitMaskPosition: 'center',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskRepeat: 'no-repeat',
+                    mixBlendMode: 'source-in',
+                    zIndex: 3
                   }}
                 />
               ))}
 
               {/* Updated Grout overlay */}
-              
               {localThickness !== "none" && (
                 <div
                   style={{
@@ -378,9 +398,9 @@ const TileCanvasView = ({
                 <MdCloseFullscreen size={20} />
               </button>
             </div>
-            <div className="relative" style={{ minHeight: "500px" }}>
+            <div className="relative" style={{ minHeight: "700px" }}>
               {/* Tile image and overlays as full background */}
-              <div className="relative w-full h-full" style={{ minHeight: "500px" }}>
+              <div className="relative w-full h-full" style={{ minHeight: "700px" }}>
                 {/* Mask Layers */}
                 {tileMasks && tileMasks.map(mask => (
                   <div
@@ -461,9 +481,28 @@ const TileCanvasView = ({
         </div>
       )}
 
+{/* Tile Size Selection & Environment Selection */}
+<div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mt-6 mb-6">
+      {/* Environment Selection */}
+      <div className="p-2">
+        <div className="text-sm font-light font-poppins mb-2 tracking-wider">CHOOSE ENVIRONMENT:</div>
+        <div className="flex items-center gap-4 flex-wrap">
+          {environments.map((env) => (
+            <button
+              key={env.label}
+              className={`p-3 border text-2xl sm:text-3xl hover:bg-black hover:text-white hover:border hover:border-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out ${activeEnv === env.label ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
+                } rounded`}
+              onClick={() => setActiveEnv(env.label)}
+            >
+              {env.icon}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Tile Size Selection */}
-      <div className="mb-6">
-        <div className="text-sm font-light font-poppins mb-2 tracking-wider">TILE SIZE:</div>
+      <div className="pr-2">
+        <br />
         <div className="flex gap-2">
           {Object.keys(sizeToPx).map((size) => {
             let Icon;
@@ -482,14 +521,14 @@ const TileCanvasView = ({
             const isSelected = localSize === size;
             const isLarge = size === "12x12";
             const baseClasses =
-              " px-3 py-1  tracking-wide flex flex-col items-center gap-1";
+              " px-3 py-1  tracking-wide flex flex-col items-center gap-1 hover:bg-black hover:text-white hover:border hover:border-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out";
             const textSize = isLarge ? "text-sm font-light font-poppins" : "text-xs font-light font-poppins"; // larger text for 12x12
             const iconSize = isLarge ? 30 : 22; // larger icon for 12x12
             return (
               <button
                 key={size}
                 onClick={() => setLocalSize(size)}
-                className={`${baseClasses} ${textSize} ${isSelected ? "bg-black text-white" : "bg-white text-black"
+                className={`${baseClasses} ${textSize} ${isSelected ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
                   }`}
               >
                 {Icon && <Icon size={iconSize} />}
@@ -500,33 +539,17 @@ const TileCanvasView = ({
         </div>
       </div>
 
-      {/* Environment Selection */}
-      <div className="mb-6">
-        <div className="text-sm font-light font-poppins mb-2 tracking-wider">CHOOSE ENVIRONMENT:</div>
-        <div className="flex items-center gap-4 flex-wrap">
-          {environments.map((env) => (
-            <button
-              key={env.label}
-              className={`p-3 border text-xl ${activeEnv === env.label ? "bg-black text-white" : "bg-white text-black"
-                } rounded`}
-              onClick={() => setActiveEnv(env.label)}
-            >
-              {env.icon}
-            </button>
-          ))}
-        </div>
-      </div>
-
+</div>
       {/* Grout Controls */}
-      <div className="flex gap-6 mb-6">
+      <div className="flex flex-col sm:flex-row gap-6 mb-6">
         {/* Grout Color */}
-        <div className="flex-1">
+        <div className="">
           <div className="text-sm  mb-2 tracking-wider font-light font-poppins">GROUT COLOR:</div>
           <div className="flex gap-4">
             {groutColors.map((color, index) => (
               <div
                 key={index}
-                className={`w-6 h-6 rounded-full border cursor-pointer ${localGroutColor === color ? "ring-2 ring-black" : ""
+                className={`w-6 h-6 rounded-full border cursor-pointer hover:ring-2 hover:ring-red-500 transition-all duration-300 ease-in-out ${localGroutColor === color ? "ring-2 ring-red-500" : ""
                   }`}
                 style={{ backgroundColor: color }}
                 onClick={() => setLocalGroutColor(color)}
@@ -536,14 +559,14 @@ const TileCanvasView = ({
         </div>
 
         {/* Grout Thickness */}
-        <div className="flex-1">
+        <div className="">
           <div className="text-sm mb-2 tracking-wider font-light font-poppins">GROUT THICKNESS:</div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {thicknessLevels.map((level) => (
               <button
                 key={level}
                 onClick={() => setLocalThickness(level)}
-                className={`border px-3 py-1 uppercase text-xs tracking-wide font-light font-poppins ${localThickness === level ? "bg-black text-white" : "bg-white text-black"
+                className={`border px-3 py-1 uppercase text-xs tracking-wide font-light font-poppins hover:bg-black hover:text-white hover:border hover:border-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out ${localThickness === level ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
                   }`}
               >
                 {level}
