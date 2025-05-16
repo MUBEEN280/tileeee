@@ -11,7 +11,7 @@ const ColorEditor = ({ tile }) => {
     setSelectedBorder,
     setSelectedCategory,
     borderMasks,
-    setBorderMaskColor
+    setBorderMaskColor,
   } = useTileSimulator();
 
   const [hoveredPaletteColor, setHoveredPaletteColor] = useState(null);
@@ -29,13 +29,15 @@ const ColorEditor = ({ tile }) => {
   const allAvailableColors = Array.from(
     new Set([
       ...tileMasks.flatMap((mask) => mask.availableColors || []),
-      ...(borderMasks || []).flatMap((mask) => mask.availableColors || [])
+      ...(borderMasks || []).flatMap((mask) => mask.availableColors || []),
     ])
   );
 
   // The currently selected mask object
   const selectedMask = tileMasks.find((mask) => mask.id === selectedMaskId);
-  const selectedBorderMask = borderMasks?.find((mask) => mask.maskId === selectedBorderMaskId);
+  const selectedBorderMask = borderMasks?.find(
+    (mask) => mask.maskId === selectedBorderMaskId
+  );
 
   // When a palette color is clicked, update only the selected mask
   const handlePaletteColorSelect = (paletteColor) => {
@@ -53,7 +55,11 @@ const ColorEditor = ({ tile }) => {
   const getMaskColor = (mask) => {
     if (previewMode && hoveredPaletteColor) {
       // Check if this is a border mask
-      if (mask.maskId && selectedBorderMask && mask.maskId === selectedBorderMask.maskId) {
+      if (
+        mask.maskId &&
+        selectedBorderMask &&
+        mask.maskId === selectedBorderMask.maskId
+      ) {
         return hoveredPaletteColor;
       }
       // Check if this is a tile mask
@@ -75,7 +81,9 @@ const ColorEditor = ({ tile }) => {
     }
 
     // Then check tile masks
-    const borderMaskWithColor = borderMasks?.find((mask) => mask.color === color);
+    const borderMaskWithColor = borderMasks?.find(
+      (mask) => mask.color === color
+    );
     if (borderMaskWithColor) {
       setSelectedBorderMaskId(borderMaskWithColor.maskId);
       setSelectedMaskId(null);
@@ -83,8 +91,11 @@ const ColorEditor = ({ tile }) => {
   };
 
   // The color of the selected mask (for highlighting in palette and 'Colors Used')
-  const selectedMaskColor = selectedMask ? selectedMask.color :
-    selectedBorderMask ? selectedBorderMask.color : null;
+  const selectedMaskColor = selectedMask
+    ? selectedMask.color
+    : selectedBorderMask
+    ? selectedBorderMask.color
+    : null;
 
   // Handle Add Borders & Remove Borders
   const handleAddOrRemoveBorders = () => {
@@ -103,27 +114,27 @@ const ColorEditor = ({ tile }) => {
     const colorMap = new Map();
 
     // First add tile mask colors
-    tileMasks.forEach(mask => {
-      colorMap.set(mask.color, { type: 'tile', mask });
+    tileMasks.forEach((mask) => {
+      colorMap.set(mask.color, { type: "tile", mask });
     });
 
     // Then add/update with border mask colors
-    borderMasks?.forEach(mask => {
+    borderMasks?.forEach((mask) => {
       if (colorMap.has(mask.color)) {
         // If color exists, mark it as both tile and border
         const existing = colorMap.get(mask.color);
         colorMap.set(mask.color, {
           ...existing,
           hasBorder: true,
-          borderMask: mask
+          borderMask: mask,
         });
       } else {
         // If color doesn't exist, add it as border only
         colorMap.set(mask.color, {
-          type: 'border',
+          type: "border",
           mask,
           hasBorder: true,
-          borderMask: mask
+          borderMask: mask,
         });
       }
     });
@@ -157,9 +168,9 @@ const ColorEditor = ({ tile }) => {
                 style={{
                   width: 1200,
                   height: 500,
-                  transform: 'translate(-50%, -50%)',
-                  objectFit: 'contain',
-                  zIndex: 10
+                  transform: "translate(-50%, -50%)",
+                  objectFit: "contain",
+                  zIndex: 10,
                 }}
               />
             )}
@@ -210,59 +221,78 @@ const ColorEditor = ({ tile }) => {
             ))}
 
             {/* Border Masks */}
-            {selectedBorder && borderMasks && borderMasks.map((mask) => (
-              <div
-                key={mask.maskId}
-                className="absolute inset-0"
-                style={{
-                  backgroundColor: getMaskColor(mask),
-                  WebkitMaskImage: `url(${mask.image})`,
-                  maskImage: `url(${mask.image})`,
-                  WebkitMaskSize: "100%",
-                  maskSize: "100%",
-                  WebkitMaskPosition: "center",
-                  maskPosition: "center",
-                  WebkitMaskRepeat: "no-repeat",
-                  maskRepeat: "no-repeat",
-                  width: "100%",
-                  height: "100%",
-                  top: "0",
-                  left: "0",
-                  zIndex: 7,
-                  pointerEvents: "none",
-                }}
-              />
-            ))}
+            {selectedBorder &&
+              borderMasks &&
+              borderMasks.map((mask) => (
+                <div
+                  key={mask.maskId}
+                  className="absolute inset-0"
+                  style={{
+                    backgroundColor: getMaskColor(mask),
+                    WebkitMaskImage: `url(${mask.image})`,
+                    maskImage: `url(${mask.image})`,
+                    WebkitMaskSize: "100%",
+                    maskSize: "100%",
+                    WebkitMaskPosition: "center",
+                    maskPosition: "center",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskRepeat: "no-repeat",
+                    width: "100%",
+                    height: "100%",
+                    top: "0",
+                    left: "0",
+                    zIndex: 7,
+                    pointerEvents: "none",
+                  }}
+                />
+              ))}
           </div>
         </div>
 
         {/* Add/Remove Border Button */}
         <div className="mb-4 flex justify-center items-center lg:justify-start lg:items-start gap-2">
           <button
-            className="flex justify-center items-center gap-2 bg-black hover:bg-black/90 text-white font-poppins font-light py-2 px-4 rounded-md hover:border hover:border-red-500 hover:shadow-md hover:shadow-red-500 transition duration-300 ease-in-out"
+            className={`flex justify-center items-center gap-2 
+    ${
+      selectedBorder
+        ? "bg-red-600 hover:bg-red-700"
+        : "bg-black hover:bg-black/90"
+    }
+    text-white font-poppins font-light py-2 px-4 rounded-md 
+    ${
+      selectedBorder
+        ? "ring-2 ring-red-500 shadow-md shadow-red-500"
+        : "hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500"
+    } 
+    transition duration-300 ease-in-out`}
             onClick={handleAddOrRemoveBorders}
           >
             <span>{selectedBorder ? <FaTimes /> : <FaPlus />}</span>
-            <span>{selectedBorder ? 'Remove Border' : 'Add Border'}</span>
+            <span>{selectedBorder ? "Remove Border" : "Add Border"}</span>
           </button>
         </div>
 
         {/* Colors Used */}
         <div className="mb-4">
-          <h4 className="mb-2 font-light font-poppins text-center lg:text-left">Colors Used</h4>
+          <h4 className="mb-2 font-light font-poppins text-center lg:text-left">
+            Colors Used
+          </h4>
           <div className="flex justify-center items-center lg:justify-start lg:items-start flex-wrap gap-2">
-            {Array.from(getUniqueColors().entries()).map(([color, data], index) => (
-              <button
-                key={`color-used-${index}-${color}`}
-                className={`w-6 h-6 border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500 ${selectedMaskColor === color
-                    ? "border-black ring-1 ring-offset-1 ring-red-500"
-                    : "border-gray-200 hover:border-red-500"
-                  } ${data.hasBorder ? 'rounded-md' : 'rounded-full'}`}
-                style={{ backgroundColor: color }}
-                title={`${color}${data.hasBorder ? ' (Border)' : ' (Tile)'}`}
-                onClick={() => handleColorUsedClick(color)}
-              />
-            ))}
+            {Array.from(getUniqueColors().entries()).map(
+              ([color, data], index) => (
+                <button
+                  key={`color-used-${index}-${color}`}
+                  className={`w-6 h-6 border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500 ${
+                    selectedMaskColor === color
+                      ? "border-black ring-1 ring-offset-1 ring-red-500"
+                      : "border-gray-200 hover:border-red-500"
+                  } ${data.hasBorder ? "rounded-md" : "rounded-full"}`}
+                  style={{ backgroundColor: color }}
+                  title={`${color}${data.hasBorder ? " (Border)" : " (Tile)"}`}
+                  onClick={() => handleColorUsedClick(color)}
+                />
+              )
+            )}
           </div>
         </div>
 
@@ -271,10 +301,11 @@ const ColorEditor = ({ tile }) => {
           {allAvailableColors.map((paletteColor, index) => (
             <button
               key={`palette-color-${index}-${paletteColor}`}
-              className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 ${selectedMaskColor === paletteColor
+              className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                selectedMaskColor === paletteColor
                   ? "border-black ring-1 ring-offset-1 ring-red-500"
                   : "border-transparent hover:border-red-500"
-                }`}
+              }`}
               style={{ backgroundColor: paletteColor }}
               title={paletteColor}
               onClick={() => handlePaletteColorSelect(paletteColor)}

@@ -5,7 +5,6 @@ import ColorEditor from "./ColorEditor";
 import TileCanvasView from "./TileCanvasView";
 import { motion, useInView } from "framer-motion";
 
-
 const TileSimulator = () => {
   const {
     selectedTile,
@@ -23,7 +22,7 @@ const TileSimulator = () => {
     tileMasks,
     setTileMaskColor,
     borderMasks,
-    selectedBorder
+    selectedBorder,
   } = useTileSimulator();
 
   const tileRef = useRef(null);
@@ -37,14 +36,17 @@ const TileSimulator = () => {
   return (
     <div className="min-h-screen max-w-9xl p-3 lg:p-0 m-auto  grid grid-cols-1 lg:grid-rows-1 lg:grid-cols-[1fr_0.7fr_2.3fr] gap-4">
       {/* Tile Selection */}
-      <motion.div className="flex flex-col"
+      <motion.div
+        className="flex flex-col"
         ref={tileRef}
         initial={{ opacity: 0, x: -100, scale: 0.1 }}
         animate={tileInView ? { opacity: 1, x: 0, scale: 1 } : {}}
         transition={{ duration: 0.6 }}
       >
         <div className="text-center lg:text-left py-6">
-          <div className="text-lg  tracking-widest font-poppins">TILE SELECTION</div>
+          <div className="text-lg  tracking-widest font-poppins">
+            TILE SELECTION
+          </div>
           <hr className="bg-red-500 h-[2px] w-full my-3 rounded-full" />
         </div>
         <div className="overflow-y-auto">
@@ -53,14 +55,17 @@ const TileSimulator = () => {
       </motion.div>
 
       {/* Color Editor */}
-      <motion.div className=" flex flex-col"
+      <motion.div
+        className=" flex flex-col"
         ref={colorRef}
         initial={{ opacity: 0, y: 150, scale: 0.2 }}
         animate={colorInView ? { opacity: 1, y: 0, scale: 1 } : {}}
         transition={{ duration: 0.7, delay: 0.2 }}
       >
         <div className="text-center lg:text-left py-6">
-          <div className="text-lg  tracking-widest font-poppins">COLOR EDITOR</div>
+          <div className="text-lg  tracking-widest font-poppins">
+            COLOR EDITOR
+          </div>
           <hr className="bg-red-500 h-[2px] w-full my-3 rounded-full" />
         </div>
         <div className="overflow-y-auto">
@@ -85,12 +90,12 @@ const TileSimulator = () => {
       </motion.div>
 
       {/* View */}
-      <motion.div className="flex flex-col"
+      <motion.div
+        className="flex flex-col"
         ref={viewRef}
         initial={{ opacity: 0, x: 100, scale: 0.3 }}
         animate={viewInView ? { opacity: 1, x: 0, scale: 1 } : {}}
         transition={{ duration: 0.8, delay: 0.4 }}
-
       >
         <div className="text-center lg:text-left py-6">
           <div className="text-lg font-light font-poppins">VIEW</div>

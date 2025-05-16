@@ -2,8 +2,8 @@ import React from 'react';
 
 const ShopButton = () => {
   return (
-    <button 
-      className="bg-white border border-black px-6 py-2 uppercase font-poppins hover:bg-black hover:text-white hover:border hover:border-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out"
+    <button
+      className="bg-white border border-black px-6 py-2 uppercase font-poppins hover:bg-black hover:text-white hover:ring-2 hover:ring-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out"
     >
       Shop Now
     </button>

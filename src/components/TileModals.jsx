@@ -7,14 +7,19 @@ import html2canvas from "html2canvas";
 
 export default function TileModals({ isOpen, onClose, tileConfig }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const { register, handleSubmit, formState: { errors }, reset } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm();
   const previewRef = useRef(null);
   const canvasRef = useRef(null);
   const [loadedImages, setLoadedImages] = useState(new Map());
 
   // Size conversion logic
   const sizeToPx = {
-    "8x8": 8,    // 8 inches
+    "8x8": 8, // 8 inches
     "12x12": 12, // 12 inches
   };
 
@@ -23,7 +28,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
     const inches = sizeToPx[size] || 12;
     // Reverse the scale - larger number for smaller tiles
     // 8x8 should be largest, 16x16 should be smallest
-    const scale = 96 - (inches * 4); // This will give us 64px for 8x8, 48px for 12x12
+    const scale = 96 - inches * 4; // This will give us 64px for 8x8, 48px for 12x12
     return `${scale}px`;
   };
 
@@ -62,7 +67,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       };
 
       img.onerror = (e) => {
-        console.error('Error loading image:', src, e);
+        console.error("Error loading image:", src, e);
         reject(new Error(`Failed to load image: ${src}`));
       };
 
@@ -92,7 +97,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         try {
           baseImage = await loadImage(tileConfig.tile.image);
         } catch (error) {
-          console.error('Failed to load base tile image:', error);
+          console.error("Failed to load base tile image:", error);
           return;
         }
       }
@@ -106,7 +111,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
               const maskImg = await loadImage(mask.image);
               maskImages.push({ image: maskImg, mask });
             } catch (error) {
-              console.error('Failed to load mask image:', error);
+              console.error("Failed to load mask image:", error);
             }
           }
         }
@@ -122,29 +127,47 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
           if (baseImage) {
             ctx.save();
             // Maintain aspect ratio while scaling
-            const scale = Math.min(tileSize / baseImage.width, tileSize / baseImage.height);
+            const scale = Math.min(
+              tileSize / baseImage.width,
+              tileSize / baseImage.height
+            );
             const scaledWidth = baseImage.width * scale;
             const scaledHeight = baseImage.height * scale;
 
             const offsetX = (tileSize - scaledWidth) / 2;
             const offsetY = (tileSize - scaledHeight) / 2;
 
-            ctx.drawImage(baseImage, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
+            ctx.drawImage(
+              baseImage,
+              x + offsetX,
+              y + offsetY,
+              scaledWidth,
+              scaledHeight
+            );
             ctx.restore();
           }
 
           // Draw masks with proper scaling
           maskImages.forEach(({ image, mask }) => {
             ctx.save();
-            const scale = Math.min(tileSize / image.width, tileSize / image.height);
+            const scale = Math.min(
+              tileSize / image.width,
+              tileSize / image.height
+            );
             const scaledWidth = image.width * scale;
             const scaledHeight = image.height * scale;
             const offsetX = (tileSize - scaledWidth) / 2;
             const offsetY = (tileSize - scaledHeight) / 2;
 
-            ctx.globalCompositeOperation = 'source-in';
-            ctx.drawImage(image, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
-            ctx.globalCompositeOperation = 'source-atop';
+            ctx.globalCompositeOperation = "source-in";
+            ctx.drawImage(
+              image,
+              x + offsetX,
+              y + offsetY,
+              scaledWidth,
+              scaledHeight
+            );
+            ctx.globalCompositeOperation = "source-atop";
             ctx.fillStyle = mask.color;
             ctx.fillRect(x, y, tileSize, tileSize);
             ctx.restore();
@@ -153,7 +176,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
           // Draw grout with proper scaling
           if (tileConfig.thickness !== "none") {
             const groutWidth = parseInt(groutThicknessPx);
-            ctx.fillStyle = tileConfig.groutColor || '#333333';
+            ctx.fillStyle = tileConfig.groutColor || "#333333";
             // Vertical grout
             ctx.fillRect(x - groutWidth / 2, y, groutWidth, tileSize);
             // Horizontal grout
@@ -164,13 +187,12 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
       // Add size indicator with more visible styling
       ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.font = 'bold 20px Arial';
+      ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      ctx.font = "bold 20px Arial";
       ctx.fillText(`${sizeInInches}" x ${sizeInInches}"`, 20, 40);
       ctx.restore();
-
     } catch (error) {
-      console.error('Error in drawing process:', error);
+      console.error("Error in drawing process:", error);
     }
   };
 
@@ -179,7 +201,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Set canvas size to maintain aspect ratio
@@ -190,16 +212,16 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
   }, [tileConfig]);
 
   const tileSizes = [
-    { value: "8x8", label: "8\" x 8\"" },
-    { value: "12x12", label: "12\" x 12\"" },
+    { value: "8x8", label: '8" x 8"' },
+    { value: "12x12", label: '12" x 12"' },
     { value: "Box", label: "Box" },
-    { value: "custom", label: "Custom Size" }
+    { value: "custom", label: "Custom Size" },
   ];
 
   // Add this function before generatePDF
   const ensureCanvasDrawn = async (canvas) => {
     return new Promise((resolve) => {
-      if (canvas.getContext('2d').getImageData(0, 0, 1, 1).data[3] !== 0) {
+      if (canvas.getContext("2d").getImageData(0, 0, 1, 1).data[3] !== 0) {
         resolve();
       } else {
         setTimeout(() => ensureCanvasDrawn(canvas), 100);
@@ -209,7 +231,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
   const generatePDF = async (formData) => {
     try {
-      console.log('Starting PDF generation...');
+      console.log("Starting PDF generation...");
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -218,20 +240,28 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       // Add logo Header & Company Information
       try {
         const logoUrl = "/Images/logo.png";
-        pdf.addImage(logoUrl, 'PNG', margin, 15, 30, 30);
-        console.log('Logo added successfully');
+        pdf.addImage(logoUrl, "PNG", margin, 15, 30, 30);
+        console.log("Logo added successfully");
       } catch (error) {
-        console.error('Error adding logo:', error);
+        console.error("Error adding logo:", error);
       }
 
       // Title and company info
       pdf.setFontSize(14);
-      pdf.text("Tile Configuration Details", pageWidth / 2, 30, { align: "center" });
+      pdf.text("Tile Configuration Details", pageWidth / 2, 30, {
+        align: "center",
+      });
 
       pdf.setFontSize(8);
-      pdf.text("1325 Exchange Drive", pageWidth - margin, 20, { align: "right" });
-      pdf.text("Richardson, TX 75081", pageWidth - margin, 25, { align: "right" });
-      pdf.text("Phone: 214-352-0000", pageWidth - margin, 30, { align: "right" });
+      pdf.text("1325 Exchange Drive", pageWidth - margin, 20, {
+        align: "right",
+      });
+      pdf.text("Richardson, TX 75081", pageWidth - margin, 25, {
+        align: "right",
+      });
+      pdf.text("Phone: 214-352-0000", pageWidth - margin, 30, {
+        align: "right",
+      });
 
       // Draw a horizontal line below the header
       pdf.setDrawColor(139, 0, 0);
@@ -251,10 +281,10 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         { label: "Name", value: formData.name },
         { label: "Email", value: formData.email },
         { label: "Phone", value: formData.phone },
-        { label: "Reference", value: formData.reference || 'N/A' }
+        { label: "Reference", value: formData.reference || "N/A" },
       ];
 
-      personalInfo.forEach(info => {
+      personalInfo.forEach((info) => {
         pdf.text(`${info.label}: ${info.value}`, margin, yPosition);
         yPosition += 8;
       });
@@ -264,7 +294,9 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       // Tile Information Section
       pdf.setFontSize(16);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("Tile Information", pageWidth / 2, yPosition, { align: "center" });
+      pdf.text("Tile Information", pageWidth / 2, yPosition, {
+        align: "center",
+      });
       yPosition += 10;
 
       // Calculate the width for text and images
@@ -276,67 +308,87 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       pdf.setFontSize(12);
       pdf.setTextColor(51, 51, 51);
       const tileInfo = [
-        { label: "Tile Name", value: tileConfig?.tile?.name || 'N/A' },
+        { label: "Tile Name", value: tileConfig?.tile?.name || "N/A" },
         { label: "Quantity", value: formData.quantity },
         { label: "Size", value: formData.tileSize },
-        { label: "Color", value: tileConfig?.tile?.color || tileConfig?.color || 'N/A' },
-        { label: "Grout Color", value: tileConfig?.groutColor || 'N/A' },
-        { label: "Grout Thickness", value: tileConfig?.thickness || 'N/A' },
-        { label: "Environment", value: tileConfig?.environment?.label || 'N/A' }
+        {
+          label: "Color",
+          value: tileConfig?.tile?.color || tileConfig?.color || "N/A",
+        },
+        { label: "Grout Color", value: tileConfig?.groutColor || "N/A" },
+        { label: "Grout Thickness", value: tileConfig?.thickness || "N/A" },
+        {
+          label: "Environment",
+          value: tileConfig?.environment?.label || "N/A",
+        },
       ];
 
       let textYPosition = yPosition;
       let imageYPosition = yPosition;
 
-      tileInfo.forEach(info => {
+      tileInfo.forEach((info) => {
         pdf.text(`${info.label}: ${info.value}`, margin, textYPosition);
         textYPosition += 8;
       });
 
       // Add tile previews on the right
       if (previewRef.current) {
-        console.log('Processing previews...');
+        console.log("Processing previews...");
         try {
-          const previewSections = previewRef.current.querySelectorAll('.border.rounded-lg');
+          const previewSections =
+            previewRef.current.querySelectorAll(".border.rounded-lg");
 
           for (let i = 0; i < previewSections.length; i++) {
             console.log(`Processing preview section ${i + 1}...`);
-            const previewContainer = previewSections[i].querySelector('.w-full.rounded-lg.overflow-hidden.relative');
-            
+            const previewContainer = previewSections[i].querySelector(
+              ".w-full.rounded-lg.overflow-hidden.relative"
+            );
+
             if (previewContainer) {
               const previewHeight = imageWidth * 0.4;
 
               try {
                 // Wait for all images to load
-                const images = previewContainer.getElementsByTagName('img');
-                await Promise.all(Array.from(images).map(img => {
-                  if (img.complete) return Promise.resolve();
-                  return new Promise(resolve => {
-                    img.onload = resolve;
-                    img.onerror = resolve;
-                  });
-                }));
+                const images = previewContainer.getElementsByTagName("img");
+                await Promise.all(
+                  Array.from(images).map((img) => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise((resolve) => {
+                      img.onload = resolve;
+                      img.onerror = resolve;
+                    });
+                  })
+                );
 
                 // Use html2canvas to capture the preview container
                 const canvas = await html2canvas(previewContainer, {
                   scale: 2,
                   useCORS: true,
                   allowTaint: true,
-                  backgroundColor: '#ffffff',
+                  backgroundColor: "#ffffff",
                   logging: true,
                   onclone: (clonedDoc) => {
                     // Ensure all styles are preserved
-                    const clonedContainer = clonedDoc.querySelector('.w-full.rounded-lg.overflow-hidden.relative');
+                    const clonedContainer = clonedDoc.querySelector(
+                      ".w-full.rounded-lg.overflow-hidden.relative"
+                    );
                     if (clonedContainer) {
                       clonedContainer.style.width = `${previewContainer.offsetWidth}px`;
                       clonedContainer.style.height = `${previewContainer.offsetHeight}px`;
                     }
-                  }
+                  },
                 });
 
                 // Add the captured image to the PDF
-                const imgData = canvas.toDataURL('image/png', 1.0);
-                pdf.addImage(imgData, 'PNG', imageStartX, imageYPosition, imageWidth, previewHeight);
+                const imgData = canvas.toDataURL("image/png", 1.0);
+                pdf.addImage(
+                  imgData,
+                  "PNG",
+                  imageStartX,
+                  imageYPosition,
+                  imageWidth,
+                  previewHeight
+                );
 
                 imageYPosition += previewHeight + 20;
 
@@ -347,13 +399,16 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
                 console.log(`Preview section ${i + 1} processed successfully`);
               } catch (error) {
-                console.error(`Error processing preview section ${i + 1}:`, error);
+                console.error(
+                  `Error processing preview section ${i + 1}:`,
+                  error
+                );
                 continue;
               }
             }
           }
         } catch (error) {
-          console.error('Error processing previews:', error);
+          console.error("Error processing previews:", error);
         }
       }
 
@@ -362,13 +417,19 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       if (lastYPosition < pageHeight - 50) {
         pdf.setFontSize(16);
         pdf.setTextColor(139, 0, 0);
-        pdf.text("Thank You!", pageWidth / 2, lastYPosition, { align: "center" });
+        pdf.text("Thank You!", pageWidth / 2, lastYPosition, {
+          align: "center",
+        });
         let thankYouY = lastYPosition + 10;
 
         pdf.setFontSize(12);
         pdf.setTextColor(51, 51, 51);
-        const thankYouMessage = "Thank you for shopping with us! We appreciate your business and hope you love your new tile selection. If you have any questions or need assistance, please don't hesitate to contact us.";
-        const splitMessage = pdf.splitTextToSize(thankYouMessage, pageWidth - (margin * 2));
+        const thankYouMessage =
+          "Thank you for shopping with us! We appreciate your business and hope you love your new tile selection. If you have any questions or need assistance, please don't hesitate to contact us.";
+        const splitMessage = pdf.splitTextToSize(
+          thankYouMessage,
+          pageWidth - margin * 2
+        );
         pdf.text(splitMessage, pageWidth / 2, thankYouY, { align: "center" });
         thankYouY += splitMessage.length * 8 + 10;
 
@@ -376,19 +437,23 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         pdf.setTextColor(139, 0, 0);
         pdf.text("Contact Us:", pageWidth / 2, thankYouY, { align: "center" });
         thankYouY += 8;
-        pdf.text("Email: support@tilesimulator.com", pageWidth / 2, thankYouY, { align: "center" });
+        pdf.text("Email: support@tilesimulator.com", pageWidth / 2, thankYouY, {
+          align: "center",
+        });
         thankYouY += 8;
-        pdf.text("Phone: 214-352-0000", pageWidth / 2, thankYouY, { align: "center" });
+        pdf.text("Phone: 214-352-0000", pageWidth / 2, thankYouY, {
+          align: "center",
+        });
       }
 
-      console.log('Generating PDF blob...');
-      const pdfBlob = pdf.output('blob');
+      console.log("Generating PDF blob...");
+      const pdfBlob = pdf.output("blob");
       const blobUrl = URL.createObjectURL(pdfBlob);
 
-      console.log('Creating download link...');
-      const downloadLink = document.createElement('a');
+      console.log("Creating download link...");
+      const downloadLink = document.createElement("a");
       downloadLink.href = blobUrl;
-      downloadLink.download = 'tile-configuration.pdf';
+      downloadLink.download = "tile-configuration.pdf";
       document.body.appendChild(downloadLink);
       downloadLink.click();
 
@@ -396,7 +461,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(blobUrl);
 
-      console.log('PDF generation completed successfully');
+      console.log("PDF generation completed successfully");
 
       // Send email
       const storeOwnerEmail = "store@tilesimulator.com";
@@ -408,44 +473,45 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         Name: ${formData.name}
         Email: ${formData.email}
         Phone: ${formData.phone}
-        Reference: ${formData.reference || 'N/A'}
+        Reference: ${formData.reference || "N/A"}
         
         Tile Configuration:
-        Tile Name: ${tileConfig?.tile?.name || 'N/A'}
+        Tile Name: ${tileConfig?.tile?.name || "N/A"}
         Quantity: ${formData.quantity}
         Size: ${formData.tileSize}
-        Color: ${tileConfig?.tile?.color || tileConfig?.color || 'N/A'}
-        Grout Color: ${tileConfig?.groutColor || 'N/A'}
-        Grout Thickness: ${tileConfig?.thickness || 'N/A'}
-        Environment: ${tileConfig?.environment?.label || 'N/A'}
+        Color: ${tileConfig?.tile?.color || tileConfig?.color || "N/A"}
+        Grout Color: ${tileConfig?.groutColor || "N/A"}
+        Grout Thickness: ${tileConfig?.thickness || "N/A"}
+        Environment: ${tileConfig?.environment?.label || "N/A"}
       `;
 
       try {
-        const response = await fetch('/api/send-email', {
-          method: 'POST',
+        const response = await fetch("/api/send-email", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             to: storeOwnerEmail,
             subject: emailSubject,
             body: emailBody,
-            pdfBlob: pdfBlob
+            pdfBlob: pdfBlob,
           }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to send email');
+          throw new Error("Failed to send email");
         }
       } catch (error) {
-        console.error('Error sending email:', error);
-        const mailtoLink = `mailto:${storeOwnerEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+        console.error("Error sending email:", error);
+        const mailtoLink = `mailto:${storeOwnerEmail}?subject=${encodeURIComponent(
+          emailSubject
+        )}&body=${encodeURIComponent(emailBody)}`;
         window.location.href = mailtoLink;
       }
-
     } catch (error) {
-      console.error('Error in PDF generation:', error);
-      alert('There was an error generating the PDF. Please try again.');
+      console.error("Error in PDF generation:", error);
+      alert("There was an error generating the PDF. Please try again.");
     }
   };
 
@@ -473,10 +539,16 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
             </div>
             <div className="flex gap-6 flex-wrap">
               <div className="max-w-[20%] h-20">
-                <img src="/Images/logo.png" alt="" className="w-full h-full object-contain" />
+                <img
+                  src="/Images/logo.png"
+                  alt=""
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="font-light font-poppins italic">
-                <h3 className="text-lg tracking-wide font-normal">Lili Cement Tile Line</h3>
+                <h3 className="text-lg tracking-wide font-normal">
+                  Lili Cement Tile Line
+                </h3>
                 <a
                   href="https://www.google.com/maps?q=1325+Exchange+Drive+Richardson,+TX+75081"
                   target="_blank"
@@ -486,8 +558,19 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                   1325 Exchange Drive <br /> Richardson, TX 75081
                 </a>
                 <br />
-                <a href="tel:2143520000" className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out">Tel: 214-352-0000</a><br />
-                <a href="fax:2153520002" className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out">Fax: 215-352-0002</a>
+                <a
+                  href="tel:2143520000"
+                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                >
+                  Tel: 214-352-0000
+                </a>
+                <br />
+                <a
+                  href="fax:2153520002"
+                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                >
+                  Fax: 215-352-0002
+                </a>
               </div>
 
               <div className="font-light font-poppins">
@@ -501,15 +584,28 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                   8 East Stow Road <br /> Suite 2000 <br /> Marlton, NJ 08053
                 </a>
                 <br />
-                <a href="tel:8569881802" className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out">Phone: 856-988-1802</a> <br />
-                <a href="fax:8569881803" className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out">Fax: 856-988-1803</a>
+                <a
+                  href="tel:8569881802"
+                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                >
+                  Phone: 856-988-1802
+                </a>{" "}
+                <br />
+                <a
+                  href="fax:8569881803"
+                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                >
+                  Fax: 856-988-1803
+                </a>
               </div>
             </div>
 
             {/* Configuration Details */}
             <div className="rounded-lg pt-4 font-poppins font-light mt-4 mb-4 text-sm space-y-2">
-              <h3 className="font-semibold font-poppins uppercase text-lg ">Selected Configuration:</h3>
-              <p>Tile Name: {tileConfig?.tile?.name || 'N/A'}</p>
+              <h3 className="font-semibold font-poppins uppercase text-lg ">
+                Selected Configuration:
+              </h3>
+              <p>Tile Name: {tileConfig?.tile?.name || "N/A"}</p>
               <p>Tile Size: {tileConfig?.size}</p>
               <p>Color: {tileConfig?.color}</p>
               <p>Grout Color: {tileConfig?.groutColor}</p>
@@ -518,7 +614,10 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                 <p>Environment: {tileConfig.environment.label}</p>
               )}
             </div>
-            <div ref={previewRef} className="grid grid-cols-1 sm:grid-cols-2 space-y-6">
+            <div
+              ref={previewRef}
+              className="grid grid-cols-1 sm:grid-cols-2 space-y-6"
+            >
               {/* Tile Pattern Without Environment */}
               <div className="rounded-lg pt-4">
                 <h3 className="mb-4 font-light font-poppins">Tile Pattern</h3>
@@ -539,46 +638,48 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     />
 
                     {/* Mask Layers */}
-                    {tileConfig?.tile?.masks && tileConfig.tile.masks.map(mask => (
-                      <div
-                        key={mask.id}
-                        className="absolute inset-0"
-                        style={{
-                          backgroundColor: mask.color,
-                          maskImage: `url(${mask.image})`,
-                          WebkitMaskImage: `url(${mask.image})`,
-                          maskSize: tileBgSize,
-                          WebkitMaskSize: tileBgSize,
-                          maskPosition: 'center',
-                          WebkitMaskPosition: 'center',
-                          maskRepeat: 'repeat',
-                          WebkitMaskRepeat: 'repeat',
-                          mixBlendMode: 'source-in',
-                          zIndex: 1
-                        }}
-                      />
-                    ))}
+                    {tileConfig?.tile?.masks &&
+                      tileConfig.tile.masks.map((mask) => (
+                        <div
+                          key={mask.id}
+                          className="absolute inset-0"
+                          style={{
+                            backgroundColor: mask.color,
+                            maskImage: `url(${mask.image})`,
+                            WebkitMaskImage: `url(${mask.image})`,
+                            maskSize: tileBgSize,
+                            WebkitMaskSize: tileBgSize,
+                            maskPosition: "center",
+                            WebkitMaskPosition: "center",
+                            maskRepeat: "repeat",
+                            WebkitMaskRepeat: "repeat",
+                            mixBlendMode: "source-in",
+                            zIndex: 1,
+                          }}
+                        />
+                      ))}
 
                     {/* Border Mask Layers */}
-                    {tileConfig?.borderMasks && tileConfig.borderMasks.map(mask => (
-                      <div
-                        key={mask.maskId}
-                        className="absolute inset-0"
-                        style={{
-                          backgroundColor: mask.color,
-                          maskImage: `url(${mask.image})`,
-                          WebkitMaskImage: `url(${mask.image})`,
-                          maskSize: '100%',
-                          WebkitMaskSize: '100%',
-                          maskPosition: 'center',
-                          WebkitMaskPosition: 'center',
-                          maskRepeat: 'no-repeat',
-                          WebkitMaskRepeat: 'no-repeat',
-                          mixBlendMode: 'source-in',
-                          zIndex: 3
-                        }}
-                      />
-                    ))}
+                    {tileConfig?.borderMasks &&
+                      tileConfig.borderMasks.map((mask) => (
+                        <div
+                          key={mask.maskId}
+                          className="absolute inset-0"
+                          style={{
+                            backgroundColor: mask.color,
+                            maskImage: `url(${mask.image})`,
+                            WebkitMaskImage: `url(${mask.image})`,
+                            maskSize: "100%",
+                            WebkitMaskSize: "100%",
+                            maskPosition: "center",
+                            WebkitMaskPosition: "center",
+                            maskRepeat: "no-repeat",
+                            WebkitMaskRepeat: "no-repeat",
+                            mixBlendMode: "source-in",
+                            zIndex: 3,
+                          }}
+                        />
+                      ))}
 
                     {/* Grout overlay */}
                     {tileConfig?.thickness !== "none" && (
@@ -593,15 +694,19 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                           backgroundImage: `
                             repeating-linear-gradient(
                               to right,
-                              ${tileConfig?.groutColor || '#333333'},
-                              ${tileConfig?.groutColor || '#333333'} ${groutThicknessPx},
+                              ${tileConfig?.groutColor || "#333333"},
+                              ${
+                                tileConfig?.groutColor || "#333333"
+                              } ${groutThicknessPx},
                               transparent ${groutThicknessPx},
                               transparent ${tileSizePx}
                             ),
                             repeating-linear-gradient(
                               to bottom,
-                              ${tileConfig?.groutColor || '#333333'},
-                              ${tileConfig?.groutColor || '#333333'} ${groutThicknessPx},
+                              ${tileConfig?.groutColor || "#333333"},
+                              ${
+                                tileConfig?.groutColor || "#333333"
+                              } ${groutThicknessPx},
                               transparent ${groutThicknessPx},
                               transparent ${tileSizePx}
                             )
@@ -610,7 +715,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                           backgroundRepeat: "repeat",
                           backgroundPosition: "center",
                           opacity: 1,
-                          zIndex: 2
+                          zIndex: 2,
                         }}
                       />
                     )}
@@ -621,7 +726,9 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
               {/* Tile Pattern With Environment */}
               {tileConfig?.environment && (
                 <div className="rounded-lg p-4">
-                  <h3 className="mb-4 font-light font-poppins">Tile in Environment</h3>
+                  <h3 className="mb-4 font-light font-poppins">
+                    Tile in Environment
+                  </h3>
                   <div
                     className="w-full rounded-lg overflow-hidden relative"
                     style={{
@@ -637,7 +744,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                       alt="Room preview"
                       className="w-full h-full object-cover absolute inset-0"
                       style={{
-                        zIndex: 3
+                        zIndex: 3,
                       }}
                     />
                     {/* Original Tile Image */}
@@ -648,48 +755,50 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                       />
 
                       {/* Mask Layers */}
-                      {tileConfig?.tile?.masks && tileConfig.tile.masks.map(mask => (
-                        <div
-                          key={mask.id}
-                          className="absolute inset-0"
-                          style={{
-                            backgroundColor: mask.color,
-                            maskImage: `url(${mask.image})`,
-                            WebkitMaskImage: `url(${mask.image})`,
-                            maskSize: tileBgSize,
-                            WebkitMaskSize: tileBgSize,
-                            maskPosition: 'center',
-                            WebkitMaskPosition: 'center',
-                            maskRepeat: 'repeat',
-                            WebkitMaskRepeat: 'repeat',
-                            mixBlendMode: 'source-in',
-                            opacity: 0.8,
-                            zIndex: 1
-                          }}
-                        />
-                      ))}
+                      {tileConfig?.tile?.masks &&
+                        tileConfig.tile.masks.map((mask) => (
+                          <div
+                            key={mask.id}
+                            className="absolute inset-0"
+                            style={{
+                              backgroundColor: mask.color,
+                              maskImage: `url(${mask.image})`,
+                              WebkitMaskImage: `url(${mask.image})`,
+                              maskSize: tileBgSize,
+                              WebkitMaskSize: tileBgSize,
+                              maskPosition: "center",
+                              WebkitMaskPosition: "center",
+                              maskRepeat: "repeat",
+                              WebkitMaskRepeat: "repeat",
+                              mixBlendMode: "source-in",
+                              opacity: 0.8,
+                              zIndex: 1,
+                            }}
+                          />
+                        ))}
 
                       {/* Border Mask Layers */}
-                      {tileConfig?.borderMasks && tileConfig.borderMasks.map(mask => (
-                        <div
-                          key={mask.maskId}
-                          className="absolute inset-0"
-                          style={{
-                            backgroundColor: mask.color,
-                            maskImage: `url(${mask.image})`,
-                            WebkitMaskImage: `url(${mask.image})`,
-                            maskSize: '100%',
-                            WebkitMaskSize: '100%',
-                            maskPosition: 'center',
-                            WebkitMaskPosition: 'center',
-                            maskRepeat: 'no-repeat',
-                            WebkitMaskRepeat: 'no-repeat',
-                            mixBlendMode: 'source-in',
-                            opacity: 0.8,
-                            zIndex: 3
-                          }}
-                        />
-                      ))}
+                      {tileConfig?.borderMasks &&
+                        tileConfig.borderMasks.map((mask) => (
+                          <div
+                            key={mask.maskId}
+                            className="absolute inset-0"
+                            style={{
+                              backgroundColor: mask.color,
+                              maskImage: `url(${mask.image})`,
+                              WebkitMaskImage: `url(${mask.image})`,
+                              maskSize: "100%",
+                              WebkitMaskSize: "100%",
+                              maskPosition: "center",
+                              WebkitMaskPosition: "center",
+                              maskRepeat: "no-repeat",
+                              WebkitMaskRepeat: "no-repeat",
+                              mixBlendMode: "source-in",
+                              opacity: 0.8,
+                              zIndex: 3,
+                            }}
+                          />
+                        ))}
 
                       {/* Grout overlay */}
                       {tileConfig?.thickness !== "none" && (
@@ -704,15 +813,19 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                             backgroundImage: `
                               repeating-linear-gradient(
                                 to right,
-                                ${tileConfig?.groutColor || '#333333'},
-                                ${tileConfig?.groutColor || '#333333'} ${groutThicknessPx},
+                                ${tileConfig?.groutColor || "#333333"},
+                                ${
+                                  tileConfig?.groutColor || "#333333"
+                                } ${groutThicknessPx},
                                 transparent ${groutThicknessPx},
                                 transparent ${tileSizePx}
                               ),
                               repeating-linear-gradient(
                                 to bottom,
-                                ${tileConfig?.groutColor || '#333333'},
-                                ${tileConfig?.groutColor || '#333333'} ${groutThicknessPx},
+                                ${tileConfig?.groutColor || "#333333"},
+                                ${
+                                  tileConfig?.groutColor || "#333333"
+                                } ${groutThicknessPx},
                                 transparent ${groutThicknessPx},
                                 transparent ${tileSizePx}
                               )
@@ -721,7 +834,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                             backgroundRepeat: "repeat",
                             backgroundPosition: "center",
                             opacity: 1,
-                            zIndex: 2
+                            zIndex: 2,
                           }}
                         />
                       )}
@@ -754,43 +867,65 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
               {/* Personal Information */}
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm text-gray-700 mb-2 font-light">Name</label>
+                  <label className="block text-sm text-gray-700 mb-2 font-light">
+                    Name
+                  </label>
                   <input
                     type="text"
                     {...register("name", { required: "Name is required" })}
                     className="block w-full rounded-md border border-gray-400 shadow-sm focus:border-black focus:ring-black px-4 py-3 text-base font-light"
                   />
-                  {errors.name && <p className="text-red-500 text-sm mt-1 font-light">{errors.name.message}</p>}
+                  {errors.name && (
+                    <p className="text-red-500 text-sm mt-1 font-light">
+                      {errors.name.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm  text-gray-700 mb-2 font-light">Email</label>
+                  <label className="block text-sm  text-gray-700 mb-2 font-light">
+                    Email
+                  </label>
                   <input
                     type="email"
                     {...register("email", {
                       required: "Email is required",
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "Invalid email address"
-                      }
+                        message: "Invalid email address",
+                      },
                     })}
                     className="block w-full rounded-md border border-gray-400  shadow-sm focus:border-black focus:ring-black px-4 py-3 text-base font-light"
                   />
-                  {errors.email && <p className="text-red-500 text-sm mt-1 font-light">{errors.email.message}</p>}
+                  {errors.email && (
+                    <p className="text-red-500 text-sm mt-1 font-light">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm  text-gray-700 mb-2 font-light">Phone Number</label>
+                  <label className="block text-sm  text-gray-700 mb-2 font-light">
+                    Phone Number
+                  </label>
                   <input
                     type="tel"
-                    {...register("phone", { required: "Phone number is required" })}
+                    {...register("phone", {
+                      required: "Phone number is required",
+                    })}
                     className="block w-full rounded-md border border-gray-400  shadow-sm focus:border-black focus:ring-black px-4 py-3 text-base font-light"
                   />
-                  {errors.phone && <p className="text-red-500 text-sm mt-1 font-light">{errors.phone.message}</p>}
+                  {errors.phone && (
+                    <p className="text-red-500 text-sm mt-1 font-light">
+                      {errors.phone.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm  text-gray-700 mb-2 font-light">Reference Number</label>
+                  <label className="block text-sm  text-gray-700 mb-2 font-light">
+                    Reference Number
+                  </label>
                   <input
                     type="text"
                     {...register("reference")}
@@ -803,38 +938,60 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
               {/* Tile Information */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-light text-gray-700 mb-2">Tile Quantity</label>
+                  <label className="block text-sm font-light text-gray-700 mb-2">
+                    Tile Quantity
+                  </label>
                   <input
                     type="number"
                     {...register("quantity", {
                       required: "Quantity is required",
-                      min: { value: 1, message: "Quantity must be at least 1" }
+                      min: { value: 1, message: "Quantity must be at least 1" },
                     })}
                     className="block w-full rounded-md border border-gray-400  shadow-sm focus:border-black focus:ring-black px-4 py-3 text-base font-light"
                     min="1"
                   />
-                  {errors.quantity && <p className="text-red-500 text-sm mt-1 font-light">{errors.quantity.message}</p>}
+                  {errors.quantity && (
+                    <p className="text-red-500 text-sm mt-1 font-light">
+                      {errors.quantity.message}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-light text-gray-700 mb-2">Tile Size</label>
+                  <label className="block text-sm font-light text-gray-700 mb-2">
+                    Tile Size
+                  </label>
                   <select
-                    {...register("tileSize", { required: "Tile size is required" })}
+                    {...register("tileSize", {
+                      required: "Tile size is required",
+                    })}
                     className="block w-full rounded-md border border-gray-400  shadow-sm focus:border-black focus:ring-black px-4 py-3 text-base font-light"
                   >
-                    <option value="" className="font-light font-poppins">Select size</option>
+                    <option value="" className="font-light font-poppins">
+                      Select size
+                    </option>
                     {tileSizes.map((size) => (
-                      <option key={size.value} value={size.value} className="font-light font-poppins">
+                      <option
+                        key={size.value}
+                        value={size.value}
+                        className="font-light font-poppins"
+                      >
                         {size.label}
                       </option>
                     ))}
                   </select>
-                  {errors.tileSize && <p className="text-red-500 text-sm mt-1 font-light">{errors.tileSize.message}</p>}
+                  {errors.tileSize && (
+                    <p className="text-red-500 text-sm mt-1 font-light">
+                      {errors.tileSize.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Additional Information */}
               <div>
-                <label className="block text-sm  text-gray-700 mb-2 font-light">Message</label>
+                <label className="block text-sm  text-gray-700 mb-2 font-light">
+                  Message
+                </label>
                 <textarea
                   {...register("message")}
                   rows="4"
