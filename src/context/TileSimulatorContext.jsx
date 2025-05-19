@@ -885,6 +885,8 @@ export const TileSimulatorProvider = ({ children }) => {
     return savedMasks ? JSON.parse(savedMasks) : [];
   });
 
+  const [blockRotations, setBlockRotations] = useState([0, 0, 0, 0]);
+
   const handleTileSelect = (tile) => {
     console.log("Selecting tile:", tile);
     // Clear any existing selections
@@ -1033,6 +1035,12 @@ export const TileSimulatorProvider = ({ children }) => {
     localStorage.setItem("groutThickness", groutThickness);
   }, [groutThickness]);
 
+  const rotateBlock = (blockIndex) => {
+    const newRotations = [...blockRotations];
+    newRotations[blockIndex] = (newRotations[blockIndex] + 90) % 360;
+    setBlockRotations(newRotations);
+  };
+
   return (
     <TileSimulatorContext.Provider
       value={{
@@ -1061,6 +1069,8 @@ export const TileSimulatorProvider = ({ children }) => {
         tileCollections,
         selectedCategory,
         setSelectedCategory,
+        blockRotations,
+        rotateBlock,
       }}
     >
       {children}

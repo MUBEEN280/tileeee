@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTileSimulator } from "../context/TileSimulatorContext";
 import { FaPlus } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
+import { IoMdRefresh } from "react-icons/io";
 
 const ColorEditor = ({ tile }) => {
   const {
@@ -22,6 +23,15 @@ const ColorEditor = ({ tile }) => {
   const [selectedBorderMaskId, setSelectedBorderMaskId] = useState(
     borderMasks && borderMasks.length > 0 ? borderMasks[0].maskId : null
   );
+
+  const [blockRotations, setBlockRotations] = useState([0, 0, 0, 0]); // Rotation degrees for each block
+  const [hoveredBlockIndex, setHoveredBlockIndex] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const rotateBlock = (blockIndex) => {
+    const newRotations = [...blockRotations];
+    newRotations[blockIndex] = (newRotations[blockIndex] + 90) % 360; // Rotate by 90 degrees
+    setBlockRotations(newRotations);
+  };
 
   if (!tile || !Array.isArray(tileMasks)) return null;
 
@@ -94,8 +104,8 @@ const ColorEditor = ({ tile }) => {
   const selectedMaskColor = selectedMask
     ? selectedMask.color
     : selectedBorderMask
-    ? selectedBorderMask.color
-    : null;
+      ? selectedBorderMask.color
+      : null;
 
   // Handle Add Borders & Remove Borders
   const handleAddOrRemoveBorders = () => {
@@ -103,7 +113,7 @@ const ColorEditor = ({ tile }) => {
       setSelectedBorder(null); // Remove border
       setSelectedBorderMaskId(null); // Clear selected border mask
     } else {
-      const confirmed = window.confirm("Please choose a border first");
+      const confirmed = window.confirm("Select a border from the Border Collection to add");
       if (!confirmed) return;
       setSelectedCategory("Border Collection"); // Switch to Border Collection
     }
@@ -164,7 +174,7 @@ const ColorEditor = ({ tile }) => {
               <img
                 src={borderMasks[0].image || selectedBorder}
                 alt="Tile Border"
-                className="absolute left-1/2 top-1/2 pointer-events-none"
+                className="absolute left-1/2 top-1/2 pointer-events-none "
                 style={{
                   width: 1200,
                   height: 500,
@@ -175,50 +185,102 @@ const ColorEditor = ({ tile }) => {
               />
             )}
 
-            {/* Tile Image */}
-            <img
-              src={tile.image}
-              alt={tile.name}
-              className="absolute inset-0 mx-auto my-auto"
+            {/* Tile Grid Container */}
+            <div
+              className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-1"
               style={{
-                width: selectedBorder ? "54%" : "100%",
+                width: selectedBorder ? "50%" : "100%",
                 height: selectedBorder ? "50%" : "100%",
-                top: selectedBorder ? "50%" : "100%",
-                left: selectedBorder ? "50%" : "50%",
-                transform: "translate(-50%, -50%)",
-                position: "absolute",
-                objectFit: "contain",
-                zIndex: 5,
-                borderRadius: "8px",
+                top: selectedBorder ? "50%" : "0",
+                left: selectedBorder ? "50%" : "0",
+                transform: selectedBorder ? "translate(-50%, -50%)" : "none",
               }}
-            />
+            >
+              {[0, 1, 2, 3].map((blockIndex) => (
+                <div
+                  key={blockIndex}
+                  className="relative group "
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    overflow: "hidden",
+                  }}
+                  onMouseEnter={() => setHoveredBlockIndex(blockIndex)}
+                  onMouseLeave={() => setHoveredBlockIndex(null)}
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setMousePosition({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top,
+                    });
+                  }}
 
-            {/* Tile Masks */}
-            {tileMasks.map((mask) => (
-              <div
-                key={mask.id}
-                className="absolute inset-0"
-                style={{
-                  backgroundColor: getMaskColor(mask),
-                  WebkitMaskImage: `url(${mask.image})`,
-                  maskImage: `url(${mask.image})`,
-                  WebkitMaskSize: "cover",
-                  maskSize: "cover",
-                  WebkitMaskPosition: "center",
-                  maskPosition: "center",
-                  WebkitMaskRepeat: "no-repeat",
-                  maskRepeat: "no-repeat",
-                  width: selectedBorder ? "54%" : "100%",
-                  height: selectedBorder ? "50%" : "100%",
-                  top: selectedBorder ? "50%" : "0",
-                  left: selectedBorder ? "50%" : "0",
-                  transform: selectedBorder ? "translate(-50%, -50%)" : "none",
-                  zIndex: 6,
-                  pointerEvents: "none",
-                  borderRadius: "8px",
-                }}
-              />
-            ))}
+                >
+                  {/* Tile Block */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      transform: `rotate(${blockRotations[blockIndex]}deg)`,
+                      transition: "transform 0.3s ease-in-out",
+                    }}
+                  >
+                    <img
+                      src={tile.image}
+                      alt={`Tile Block ${blockIndex + 1}`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{
+                        transform: `scale(2)`,
+                        transformOrigin: `${blockIndex % 2 === 0 ? '0' : '100%'} ${blockIndex < 2 ? '0' : '100%'}`,
+                      }}
+                    />
+
+                    {/* Tile Masks for this block */}
+                    {tileMasks.map((mask) => (
+                      <div
+                        key={mask.id}
+                        className="absolute inset-0"
+                        style={{
+                          backgroundColor: getMaskColor(mask),
+                          WebkitMaskImage: `url(${mask.image})`,
+                          maskImage: `url(${mask.image})`,
+                          WebkitMaskSize: "cover",
+                          maskSize: "cover",
+                          WebkitMaskPosition: "center",
+                          maskPosition: "center",
+                          WebkitMaskRepeat: "no-repeat",
+                          maskRepeat: "no-repeat",
+                          transform: `scale(2)`,
+                          transformOrigin: `${blockIndex % 2 === 0 ? '0' : '100%'} ${blockIndex < 2 ? '0' : '100%'}`,
+                          zIndex: 6,
+                          pointerEvents: "none",
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Rotation Button - Always show on hover */}
+                  {hoveredBlockIndex === blockIndex && (
+
+                    <button
+                      className="absolute bg-black/50 text-white p-2 rounded-full 
+               transition-opacity duration-300 hover:bg-black/70 z-20 cursor-pointer"
+                      onClick={() => rotateBlock(blockIndex)}
+                      style={{
+                        left: mousePosition.x,
+                        top: mousePosition.y,
+                        transform: "translate(-50%, -50%)",
+                      }}
+                      title="Rotate Block"
+                    >
+                      <IoMdRefresh className="w-3 h-3" />
+                    </button>
+
+
+
+                  )}
+                </div>
+              ))}
+            </div>
 
             {/* Border Masks */}
             {selectedBorder &&
@@ -253,17 +315,15 @@ const ColorEditor = ({ tile }) => {
         <div className="mb-4 flex justify-center items-center lg:justify-start lg:items-start gap-2">
           <button
             className={`flex justify-center items-center gap-2 
-    ${
-      selectedBorder
-        ? "bg-red-600 hover:bg-red-700"
-        : "bg-black hover:bg-black/90"
-    }
+    ${selectedBorder
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-black hover:bg-black/90"
+              }
     text-white font-poppins font-light py-2 px-4 rounded-md 
-    ${
-      selectedBorder
-        ? "ring-2 ring-red-500 shadow-md shadow-red-500"
-        : "hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500"
-    } 
+    ${selectedBorder
+                ? "ring-2 ring-red-500 shadow-md shadow-red-500"
+                : "hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500"
+              } 
     transition duration-300 ease-in-out`}
             onClick={handleAddOrRemoveBorders}
           >
@@ -282,11 +342,10 @@ const ColorEditor = ({ tile }) => {
               ([color, data], index) => (
                 <button
                   key={`color-used-${index}-${color}`}
-                  className={`w-6 h-6 border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500 ${
-                    selectedMaskColor === color
-                      ? "border-black ring-1 ring-offset-1 ring-red-500"
-                      : "border-gray-200 hover:border-red-500"
-                  } ${data.hasBorder ? "rounded-md" : "rounded-full"}`}
+                  className={`w-6 h-6 border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500 ${selectedMaskColor === color
+                    ? "border-black ring-1 ring-offset-1 ring-red-500"
+                    : "border-gray-200 hover:border-red-500"
+                    } ${data.hasBorder ? "rounded-md" : "rounded-full"}`}
                   style={{ backgroundColor: color }}
                   title={`${color}${data.hasBorder ? " (Border)" : " (Tile)"}`}
                   onClick={() => handleColorUsedClick(color)}
@@ -301,11 +360,10 @@ const ColorEditor = ({ tile }) => {
           {allAvailableColors.map((paletteColor, index) => (
             <button
               key={`palette-color-${index}-${paletteColor}`}
-              className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                selectedMaskColor === paletteColor
-                  ? "border-black ring-1 ring-offset-1 ring-red-500"
-                  : "border-transparent hover:border-red-500"
-              }`}
+              className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 ${selectedMaskColor === paletteColor
+                ? "border-black ring-1 ring-offset-1 ring-red-500"
+                : "border-transparent hover:border-red-500"
+                }`}
               style={{ backgroundColor: paletteColor }}
               title={paletteColor}
               onClick={() => handlePaletteColorSelect(paletteColor)}

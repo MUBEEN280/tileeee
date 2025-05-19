@@ -7,6 +7,7 @@ import SaveButton from "./buttons/SaveButton";
 import ShopButton from "./buttons/ShopButton";
 import TileModal from "./TileModals";
 
+
 const environments = [
   { icon: <FaBed />, label: "bedroom", image: "/Images/bedroomjpg.png" },
   { icon: <FaUtensils />, label: "dining", image: "/Images/livingjpg.png" },
@@ -27,7 +28,8 @@ const TileCanvasView = ({
   groutThickness: propGroutThickness,
   tileMasks,
   borderMasks,
-  selectedBorder
+  selectedBorder,
+  blockRotations = [0, 0, 0, 0]
 }) => {
   const [activeEnv, setActiveEnv] = useState(() => {
     const savedEnv = localStorage.getItem('activeEnv');
@@ -44,10 +46,10 @@ const TileCanvasView = ({
     return savedThickness || "thin";
   });
 
- const [localSize, setLocalSize] = useState(() => {
-  const savedSize = localStorage.getItem('tileSize');
-  return (savedSize === "8x8" || savedSize === "12x12") ? savedSize : "12x12";
-});
+  const [localSize, setLocalSize] = useState(() => {
+    const savedSize = localStorage.getItem('tileSize');
+    return (savedSize === "8x8" || savedSize === "12x12") ? savedSize : "12x12";
+  });
 
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -112,12 +114,13 @@ const TileCanvasView = ({
   const drawTilesOnCanvas = async (canvas, ctx) => {
     if (!canvas || !selectedTile) return;
 
-    // Get the actual size in inches
-    const sizeInInches = sizeToPx[selectedSize] || 12;
-
-    // Reverse the grid size logic
-    // Smaller tiles (16x16) should show more tiles, larger tiles (8x8) should show fewer
-    const gridSize = Math.max(2, Math.ceil(sizeInInches / 4));
+    // Set grid size based on selectedSize
+    let gridSize = 12;
+    if (selectedSize === "8x8") {
+      gridSize = 8;
+    } else if (selectedSize === "12x12") {
+      gridSize = 12;
+    }
     const tileSize = canvas.width / gridSize;
 
     // Clear canvas
@@ -155,36 +158,38 @@ const TileCanvasView = ({
         for (let col = 0; col < gridSize; col++) {
           const x = col * tileSize;
           const y = row * tileSize;
+          const blockIndex = row * gridSize + col;
 
-          // Draw base tile with proper scaling
+          // Always use the top-left quadrant (one face)
+          let sx = 0, sy = 0, sw = baseImage ? baseImage.width / 2 : 0, sh = baseImage ? baseImage.height / 2 : 0;
+
+          // Draw base tile with proper scaling and rotation (one face per block)
           if (baseImage) {
             ctx.save();
-            // Maintain aspect ratio while scaling
-            const scale = Math.min(tileSize / baseImage.width, tileSize / baseImage.height);
-            const scaledWidth = baseImage.width * scale;
-            const scaledHeight = baseImage.height * scale;
-
-            const offsetX = (tileSize - scaledWidth) / 2;
-            const offsetY = (tileSize - scaledHeight) / 2;
-
-            ctx.drawImage(baseImage, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
+            ctx.translate(x + tileSize / 2, y + tileSize / 2);
+            ctx.rotate((blockRotations[blockIndex] * Math.PI) / 180);
+            ctx.drawImage(
+              baseImage,
+              sx, sy, sw, sh, // source rect (always top-left)
+              -tileSize / 2, -tileSize / 2, tileSize, tileSize // dest rect
+            );
             ctx.restore();
           }
 
-          // Draw masks with proper scaling
+          // Draw masks with proper scaling and rotation (one face per block)
           maskImages.forEach(({ image, mask }) => {
             ctx.save();
-            const scale = Math.min(tileSize / image.width, tileSize / image.height);
-            const scaledWidth = image.width * scale;
-            const scaledHeight = image.height * scale;
-            const offsetX = (tileSize - scaledWidth) / 2;
-            const offsetY = (tileSize - scaledHeight) / 2;
-
+            ctx.translate(x + tileSize / 2, y + tileSize / 2);
+            ctx.rotate((blockRotations[blockIndex] * Math.PI) / 180);
             ctx.globalCompositeOperation = 'source-in';
-            ctx.drawImage(image, x + offsetX, y + offsetY, scaledWidth, scaledHeight);
+            ctx.drawImage(
+              image,
+              sx, sy, sw, sh, // source rect (always top-left)
+              -tileSize / 2, -tileSize / 2, tileSize, tileSize // dest rect
+            );
             ctx.globalCompositeOperation = 'source-atop';
             ctx.fillStyle = mask.color;
-            ctx.fillRect(x, y, tileSize, tileSize);
+            ctx.fillRect(-tileSize / 2, -tileSize / 2, tileSize, tileSize);
             ctx.restore();
           });
 
@@ -204,7 +209,7 @@ const TileCanvasView = ({
       ctx.save();
       ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
       ctx.font = 'bold 20px Arial';
-      ctx.fillText(`${sizeInInches}" x ${sizeInInches}"`, 20, 40);
+      ctx.fillText(`${sizeToPx[selectedSize] || 12}" x ${sizeToPx[selectedSize] || 12}"`, 20, 40);
       ctx.restore();
 
     } catch (error) {
@@ -221,8 +226,8 @@ const TileCanvasView = ({
     if (!ctx) return;
 
     // Set canvas size to maintain aspect ratio
-    canvas.width = 800;
-    canvas.height = 800;
+    canvas.width = 500;
+    canvas.height = 500;
 
     drawTilesOnCanvas(canvas, ctx);
   }, [selectedTile, selectedColor, selectedSize, localThickness, localGroutColor, tileMasks]);
@@ -247,6 +252,7 @@ const TileCanvasView = ({
     setIsModalOpen(true);
   };
 
+
   if (!selectedTile) {
     return (
       <div className="max-w-4xl mx-auto p-4">
@@ -261,13 +267,13 @@ const TileCanvasView = ({
   return (
     <div className={`max-w-4xl mx-auto lg:mx-0 p-1 ${isExpanded ? "h-screen" : ""}`}>
       <h2 className="text-center lg:text-left font-light font-poppins  text-xl tracking-widest mb-2">TILE VISUALIZER</h2>
-       <div className="relative mb-6">
+      <div className="relative mb-6">
         <div
           className={`w-full rounded shadow ${isExpanded ? "h-full" : ""}`}
           style={{
             position: "relative",
             overflow: "hidden",
-            minHeight:"200px"
+            minHeight: "200px"
           }}
         >
           {/* Original Tile Image */}
@@ -316,7 +322,7 @@ const TileCanvasView = ({
                     WebkitMaskRepeat: 'no-repeat',
                     mixBlendMode: 'source-in',
                     zIndex: 3,
-                    clipPath: 'polygon(0 0, 8% 0, 8% 8%, 0 8%, 0 0, 100% 0, 100% 8%, 92% 8%, 92% 0, 100% 0, 100% 100%, 92% 100%, 92% 92%, 100% 92%, 100% 100%, 0 100%, 0 92%, 8% 92%, 8% 100%, 0 100%)'
+                    clipPath: 'polygon(0 0, 5% 0, 5% 5%, 0 5%, 0 0, 100% 0, 100% 5%, 95% 5%, 95% 0, 100% 0, 100% 100%, 95% 100%, 95% 95%, 100% 95%, 100% 100%, 0 100%, 0 95%, 5% 95%, 5% 100%, 0 100%)'
                   }}
                 />
               ))}
@@ -388,7 +394,7 @@ const TileCanvasView = ({
       </div>
 
       {/* Expanded View Popup */}
-     {isExpanded && (
+      {isExpanded && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
           <div className="relative w-full max-w-4xl bg-white rounded-lg overflow-hidden">
             <div className="absolute bottom-2 right-2 z-50">
@@ -482,65 +488,65 @@ const TileCanvasView = ({
         </div>
       )}
 
-{/* Tile Size Selection & Environment Selection */}
-<div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mt-6 mb-6">
-      {/* Environment Selection */}
-      <div className="p-2">
-        <div className="text-sm font-light font-poppins mb-2 tracking-wider">CHOOSE ENVIRONMENT:</div>
-        <div className="flex items-center gap-4 flex-wrap">
-          {environments.map((env) => (
-            <button
-              key={env.label}
-              className={`p-3 border text-2xl sm:text-3xl hover:bg-black hover:text-white hover:ring-2 hover:ring-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out ${activeEnv === env.label ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
-                } rounded`}
-              onClick={() => setActiveEnv(env.label)}
-            >
-              {env.icon}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tile Size Selection */}
-      <div className="pr-2">
-        <br />
-        <div className="flex gap-2">
-          {Object.keys(sizeToPx).map((size) => {
-            let Icon;
-            switch (size) {
-              case "8x8":
-                Icon = IoGridSharp;
-                break;
-              case "12x12":
-                Icon = IoGridSharp;
-                break;
-              default:
-                Icon = null;
-            }
-
-            // Conditional classes for scaling
-            const isSelected = localSize === size;
-            const isLarge = size === "12x12";
-            const baseClasses =
-              " px-3 py-1  tracking-wide flex flex-col items-center gap-1 hover:bg-black hover:text-white hover:ring-2 hover:ring-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out";
-            const textSize = isLarge ? "text-sm font-light font-poppins" : "text-xs font-light font-poppins"; // larger text for 12x12
-            const iconSize = isLarge ? 30 : 22; // larger icon for 12x12
-            return (
+      {/* Tile Size Selection & Environment Selection */}
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mt-6 mb-6">
+        {/* Environment Selection */}
+        <div className="p-2">
+          <div className="text-sm font-light font-poppins mb-2 tracking-wider">CHOOSE ENVIRONMENT:</div>
+          <div className="flex items-center gap-4 flex-wrap">
+            {environments.map((env) => (
               <button
-                key={size}
-                onClick={() => setLocalSize(size)}
-                className={`${baseClasses} ${textSize} ${isSelected ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
-                  }`}
+                key={env.label}
+                className={`p-3 border text-2xl sm:text-3xl hover:bg-black hover:text-white hover:ring-2 hover:ring-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out ${activeEnv === env.label ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
+                  } rounded`}
+                onClick={() => setActiveEnv(env.label)}
               >
-                {Icon && <Icon size={iconSize} />}
-                {size}
+                {env.icon}
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      </div>
 
-</div>
+        {/* Tile Size Selection */}
+        <div className="pr-2">
+          <br />
+          <div className="flex gap-2">
+            {Object.keys(sizeToPx).map((size) => {
+              let Icon;
+              switch (size) {
+                case "8x8":
+                  Icon = IoGridSharp;
+                  break;
+                case "12x12":
+                  Icon = IoGridSharp;
+                  break;
+                default:
+                  Icon = null;
+              }
+
+              // Conditional classes for scaling
+              const isSelected = localSize === size;
+              const isLarge = size === "12x12";
+              const baseClasses =
+                " px-3 py-1  tracking-wide flex flex-col items-center gap-1 hover:bg-black hover:text-white hover:ring-2 hover:ring-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out";
+              const textSize = isLarge ? "text-sm font-light font-poppins" : "text-xs font-light font-poppins"; // larger text for 12x12
+              const iconSize = isLarge ? 30 : 22; // larger icon for 12x12
+              return (
+                <button
+                  key={size}
+                  onClick={() => setLocalSize(size)}
+                  className={`${baseClasses} ${textSize} ${isSelected ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
+                    }`}
+                >
+                  {Icon && <Icon size={iconSize} />}
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
       {/* Grout Controls */}
       <div className="flex flex-col sm:flex-row gap-6 mb-6">
         {/* Grout Color */}
