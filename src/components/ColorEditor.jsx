@@ -187,7 +187,7 @@ const ColorEditor = ({ tile }) => {
 
             {/* Tile Grid Container */}
             <div
-              className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-1"
+              className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-[1px]"
               style={{
                 width: selectedBorder ? "50%" : "100%",
                 height: selectedBorder ? "50%" : "100%",
@@ -333,51 +333,74 @@ const ColorEditor = ({ tile }) => {
         </div>
 
         {/* Colors Used */}
-        <div className="mb-4">
-          <h4 className="mb-2 font-light font-poppins text-center lg:text-left">
-            Colors Used
-          </h4>
-          <div className="flex justify-center items-center lg:justify-start lg:items-start flex-wrap gap-2">
-            {Array.from(getUniqueColors().entries()).map(
-              ([color, data], index) => (
-                <button
-                  key={`color-used-${index}-${color}`}
-                  className={`w-6 h-6 border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500 ${selectedMaskColor === color
-                    ? "border-black ring-1 ring-offset-1 ring-red-500"
-                    : "border-gray-200 hover:border-red-500"
-                    } ${data.hasBorder ? "rounded-md" : "rounded-full"}`}
-                  style={{ backgroundColor: color }}
-                  title={`${color}${data.hasBorder ? " (Border)" : " (Tile)"}`}
-                  onClick={() => handleColorUsedClick(color)}
-                />
-              )
-            )}
-          </div>
+      <div className="mb-4">
+  <h4 className="mb-2 font-light font-poppins text-center lg:text-left">
+    Colors Used
+  </h4>
+  <div className="flex justify-center items-center lg:justify-start lg:items-start flex-wrap gap-2">
+    {Array.from(getUniqueColors().entries()).map(([color, data], index) => {
+      const isActive = selectedMaskColor === color;
+      return (
+        <div key={`color-used-${index}-${color}`} className="flex flex-col items-center group">
+          <button
+            className={`w-6 h-6 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500
+              ${isActive ? "rounded-full  ring-1 ring-offset-1 ring-red-500" : "rounded-md hover:ring-2 hover:ring-red-500"}
+              ${isActive ? "group-hover:rounded-full" : ""}
+            `}
+            style={{ backgroundColor: color }}
+            title={`${color}${data.hasBorder ? " (Border)" : " (Tile)"}`}
+            onClick={() => handleColorUsedClick(color)}
+          />
+          {/* Border appears under the button only when active and hovered */}
+          {isActive && (
+            <div className=" mt-1 rounded-full"></div>
+          )}
         </div>
+      );
+    })}
+  </div>
+</div>
+
 
         {/* Color Palette */}
-        <div className="w-full flex flex-wrap justify-center gap-2 bg-gray-100 rounded-lg pt-2 shadow-inner max-w-xs mx-auto lg:mx-0">
-          {allAvailableColors.map((paletteColor, index) => (
-            <button
-              key={`palette-color-${index}-${paletteColor}`}
-              className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 ${selectedMaskColor === paletteColor
-                ? "border-black ring-1 ring-offset-1 ring-red-500"
-                : "border-transparent hover:border-red-500"
-                }`}
-              style={{ backgroundColor: paletteColor }}
-              title={paletteColor}
-              onClick={() => handlePaletteColorSelect(paletteColor)}
-              onMouseEnter={() => {
-                setPreviewMode(true);
-                setHoveredPaletteColor(paletteColor);
-              }}
-              onMouseLeave={() => {
-                setPreviewMode(false);
-                setHoveredPaletteColor(null);
-              }}
-            />
-          ))}
-        </div>
+      <div className="w-full flex flex-wrap justify-center gap-2 bg-gray-100 rounded-lg pt-2 shadow-inner max-w-xs mx-auto lg:mx-0">
+  {allAvailableColors.map((paletteColor, index) => {
+    const isActive = selectedMaskColor === paletteColor;
+    return (
+      <div
+        key={`palette-color-${index}-${paletteColor}`}
+        className="flex flex-col items-center group"
+      >
+        <button
+          className={`w-6 h-6 transition-all duration-300 ease-in-out transform hover:scale-110
+            ${isActive
+              ? "rounded-full ring-2 ring-red-500"
+              : "rounded-md group-hover:rounded-full group-hover:ring-1 group-hover:ring-red-500 transition-all duration-300 ease-in-out"
+            }`}
+          style={{ backgroundColor: paletteColor }}
+          title={paletteColor}
+          onClick={() => handlePaletteColorSelect(paletteColor)}
+          onMouseEnter={() => {
+            setPreviewMode(true);
+            setHoveredPaletteColor(paletteColor);
+          }}
+          onMouseLeave={() => {
+            setPreviewMode(false);
+            setHoveredPaletteColor(null);
+          }}
+        />
+        {/* Show colored stripe under active color */}
+        {isActive && (
+          <div
+            className="mt-1 rounded-full"
+            style={{ backgroundColor: paletteColor }}
+          ></div>
+        )}
+      </div>
+    );
+  })}
+</div>
+
       </div>
     </div>
   );

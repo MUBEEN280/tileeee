@@ -114,107 +114,103 @@ const TileCanvasView = ({
   const drawTilesOnCanvas = async (canvas, ctx) => {
     if (!canvas || !selectedTile) return;
 
-    // Set grid size based on selectedSize
-    let gridSize = 12;
-    if (selectedSize === "8x8") {
-      gridSize = 8;
-    } else if (selectedSize === "12x12") {
-      gridSize = 12;
-    }
+    // Always use a 2x2 grid for the environment view
+    const gridSize = 2;
     const tileSize = canvas.width / gridSize;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Helper to get transformOrigin for each block
+    const getTransformOrigin = (blockIndex) => {
+      return [
+        blockIndex % 2 === 0 ? 0 : 1, // x: 0 for left, 1 for right
+        blockIndex < 2 ? 0 : 1        // y: 0 for top, 1 for bottom
+      ];
+    };
 
-    try {
-      // Load base tile image
-      let baseImage = null;
-      if (selectedTile.image) {
-        try {
-          baseImage = await loadImage(selectedTile.image);
-        } catch (error) {
-          console.error('Failed to load base tile image:', error);
-          return;
+    // Draw tiles in a 2x2 grid pattern
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const x = col * tileSize;
+        const y = row * tileSize;
+        const blockIndex = row * gridSize + col;
+
+        // Calculate transform origin for this block
+        const [originX, originY] = getTransformOrigin(blockIndex);
+
+        // Draw base tile with scale(2) and correct origin, plus rotation
+        if (selectedTile.image) {
+          try {
+            let baseImage = null;
+            baseImage = await loadImage(selectedTile.image);
+
+            ctx.save();
+            // Move to the block's top-left corner
+            ctx.translate(x, y);
+            // Move to the transform origin within the block
+            ctx.translate(originX * tileSize, originY * tileSize);
+            // Apply rotation
+            ctx.rotate((blockRotations[blockIndex] * Math.PI) / 180);
+            // Move back by the origin
+            ctx.translate(-originX * tileSize, -originY * tileSize);
+            // Scale up by 2x
+            ctx.scale(2, 2);
+            // Draw the image so that only the relevant quadrant is visible
+            ctx.drawImage(baseImage, 0, 0, tileSize, tileSize);
+            ctx.restore();
+          } catch (error) {
+            console.error('Failed to load base tile image:', error);
+          }
         }
-      }
 
-      // Load mask images
-      const maskImages = [];
-      if (tileMasks && tileMasks.length > 0) {
-        for (const mask of tileMasks) {
-          if (mask.image) {
-            try {
-              const maskImg = await loadImage(mask.image);
-              maskImages.push({ image: maskImg, mask });
-            } catch (error) {
-              console.error('Failed to load mask image:', error);
+        // Load mask images
+        const maskImages = [];
+        if (tileMasks && tileMasks.length > 0) {
+          for (const mask of tileMasks) {
+            if (mask.image) {
+              try {
+                const maskImg = await loadImage(mask.image);
+                maskImages.push({ image: maskImg, mask });
+              } catch (error) {
+                console.error('Failed to load mask image:', error);
+              }
             }
           }
         }
-      }
 
-      // Draw tiles in a grid pattern
-      for (let row = 0; row < gridSize; row++) {
-        for (let col = 0; col < gridSize; col++) {
-          const x = col * tileSize;
-          const y = row * tileSize;
-          const blockIndex = row * gridSize + col;
+        // Draw masks with the same logic
+        maskImages.forEach(({ image, mask }) => {
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.translate(originX * tileSize, originY * tileSize);
+          ctx.rotate((blockRotations[blockIndex] * Math.PI) / 180);
+          ctx.translate(-originX * tileSize, -originY * tileSize);
+          ctx.scale(2, 2);
+          ctx.globalCompositeOperation = 'source-in';
+          ctx.drawImage(image, 0, 0, tileSize, tileSize);
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = mask.color;
+          ctx.fillRect(0, 0, tileSize, tileSize);
+          ctx.restore();
+        });
 
-          // Always use the top-left quadrant (one face)
-          let sx = 0, sy = 0, sw = baseImage ? baseImage.width / 2 : 0, sh = baseImage ? baseImage.height / 2 : 0;
-
-          // Draw base tile with proper scaling and rotation (one face per block)
-          if (baseImage) {
-            ctx.save();
-            ctx.translate(x + tileSize / 2, y + tileSize / 2);
-            ctx.rotate((blockRotations[blockIndex] * Math.PI) / 180);
-            ctx.drawImage(
-              baseImage,
-              sx, sy, sw, sh, // source rect (always top-left)
-              -tileSize / 2, -tileSize / 2, tileSize, tileSize // dest rect
-            );
-            ctx.restore();
-          }
-
-          // Draw masks with proper scaling and rotation (one face per block)
-          maskImages.forEach(({ image, mask }) => {
-            ctx.save();
-            ctx.translate(x + tileSize / 2, y + tileSize / 2);
-            ctx.rotate((blockRotations[blockIndex] * Math.PI) / 180);
-            ctx.globalCompositeOperation = 'source-in';
-            ctx.drawImage(
-              image,
-              sx, sy, sw, sh, // source rect (always top-left)
-              -tileSize / 2, -tileSize / 2, tileSize, tileSize // dest rect
-            );
-            ctx.globalCompositeOperation = 'source-atop';
-            ctx.fillStyle = mask.color;
-            ctx.fillRect(-tileSize / 2, -tileSize / 2, tileSize, tileSize);
-            ctx.restore();
-          });
-
-          // Draw grout with proper scaling
-          if (localThickness !== "none") {
-            const groutWidth = parseInt(groutThicknessPx);
-            ctx.fillStyle = localGroutColor;
-            // Vertical grout
-            ctx.fillRect(x - groutWidth / 2, y, groutWidth, tileSize);
-            // Horizontal grout
-            ctx.fillRect(x, y - groutWidth / 2, tileSize, groutWidth);
-          }
+        // Draw grout with proper scaling (optional for 2x2)
+        if (localThickness !== "none") {
+          const groutWidth = parseInt(groutThicknessPx);
+          ctx.fillStyle = localGroutColor;
+          // Vertical grout
+          ctx.fillRect(x - groutWidth / 2, y, groutWidth, tileSize);
+          // Horizontal grout
+          ctx.fillRect(x, y - groutWidth / 2, tileSize, groutWidth);
         }
       }
-
-      // Add size indicator with more visible styling
-      ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.font = 'bold 20px Arial';
-      ctx.fillText(`${sizeToPx[selectedSize] || 12}" x ${sizeToPx[selectedSize] || 12}"`, 20, 40);
-      ctx.restore();
-
-    } catch (error) {
-      console.error('Error in drawing process:', error);
     }
+
+    // Add size indicator with more visible styling
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText(`${sizeToPx[selectedSize] || 12}" x ${sizeToPx[selectedSize] || 12}"`, 20, 40);
+    ctx.restore();
+
   };
 
   // Effect to draw on main canvas
