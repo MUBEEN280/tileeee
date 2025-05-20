@@ -6,7 +6,7 @@
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #ef4444 #E5E7EB;
+  scrollbar-color: #bd5b4c #E5E7EB;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -19,7 +19,7 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #ef4444;
+  background-color: #bd5b4c;
   border-radius: 10px;
 }
 

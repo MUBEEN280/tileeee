@@ -47,7 +47,7 @@ const TileSimulator = () => {
           <div className="text-lg  tracking-widest font-poppins">
             TILE SELECTION
           </div>
-          <hr className="bg-red-500 h-[2px] w-full my-3 rounded-full" />
+          <hr className="bg-[#bd5b4c] h-[2px] w-full my-3 rounded-full" />
         </div>
         <div className="overflow-y-auto">
           <TileSelector onSelectTile={setSelectedTile} />
@@ -66,7 +66,7 @@ const TileSimulator = () => {
           <div className="text-lg  tracking-widest font-poppins">
             COLOR EDITOR
           </div>
-          <hr className="bg-red-500 h-[2px] w-full my-3 rounded-full" />
+          <hr className="bg-[#bd5b4c] h-[2px] w-full my-3 rounded-full" />
         </div>
         <div className="overflow-y-auto">
           {selectedTile && (
@@ -99,7 +99,7 @@ const TileSimulator = () => {
       >
         <div className="text-center lg:text-left py-6">
           <div className="text-lg font-light font-poppins">VIEW</div>
-          <hr className="bg-red-500 h-[2px] w-full my-3 rounded-full" />
+          <hr className="bg-[#bd5b4c] h-[2px] w-full my-3 rounded-full" />
         </div>
         <div className="flex-1 overflow-y-auto mb-4">
           <TileCanvasView

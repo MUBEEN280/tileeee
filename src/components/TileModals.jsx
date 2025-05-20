@@ -532,7 +532,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
             <div className="flex justify-end">
               <button
                 onClick={() => onClose()}
-                className="bg-black bg-opacity-70 text-white rounded-full p-1 hover:bg-red-500 transition=all duration-300 ease-in-out"
+                className="bg-black bg-opacity-70 text-white rounded-full p-1 hover:bg-[#bd5b4c] transition=all duration-300 ease-in-out"
               >
                 <IoMdClose size={16} />
               </button>
@@ -553,21 +553,21 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                   href="https://www.google.com/maps?q=1325+Exchange+Drive+Richardson,+TX+75081"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                  className="text-sm text-gray-700 hover:text-[#bd5b4c] transition-all duration-300 ease-in-out"
                 >
                   1325 Exchange Drive <br /> Richardson, TX 75081
                 </a>
                 <br />
                 <a
                   href="tel:2143520000"
-                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                  className="text-sm text-gray-700 hover:text-[#bd5b4c] transition-all duration-300 ease-in-out"
                 >
                   Tel: 214-352-0000
                 </a>
                 <br />
                 <a
                   href="fax:2153520002"
-                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                  className="text-sm text-gray-700 hover:text-[#bd5b4c] transition-all duration-300 ease-in-out"
                 >
                   Fax: 215-352-0002
                 </a>
@@ -579,21 +579,21 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                   href="https://www.google.com/maps?q=8+East+Stow+Road+Suite+2000+Marlton,+NJ+08053"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                  className="text-sm text-gray-700 hover:text-[#bd5b4c] transition-all duration-300 ease-in-out"
                 >
                   8 East Stow Road <br /> Suite 2000 <br /> Marlton, NJ 08053
                 </a>
                 <br />
                 <a
                   href="tel:8569881802"
-                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                  className="text-sm text-gray-700 hover:text-[#bd5b4c] transition-all duration-300 ease-in-out"
                 >
                   Phone: 856-988-1802
                 </a>{" "}
                 <br />
                 <a
                   href="fax:8569881803"
-                  className="text-sm text-gray-700 hover:text-red-500 transition-all duration-300 ease-in-out"
+                  className="text-sm text-gray-700 hover:text-[#bd5b4c] transition-all duration-300 ease-in-out"
                 >
                   Fax: 856-988-1803
                 </a>
@@ -856,7 +856,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
           <div className="font-poppins">
             <button
               onClick={() => setIsFormOpen(false)}
-              className="flex items-center text-red-500 hover:text-red-700 mb-6 transition-all duration-300 ease-in-out"
+              className="flex items-center text-[#bd5b4c] hover:text-red-700 mb-6 transition-all duration-300 ease-in-out"
             >
               <IoArrowBack size={16} />
               <span className="ml-1 font-light">Back</span>
@@ -876,7 +876,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     className="block w-full rounded-md border border-gray-400 shadow-sm focus:border-black focus:ring-black px-4 py-3 text-base font-light"
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-sm mt-1 font-light">
+                    <p className="text-[#bd5b4c] text-sm mt-1 font-light">
                       {errors.name.message}
                     </p>
                   )}
@@ -898,7 +898,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     className="block w-full rounded-md border border-gray-400  shadow-sm focus:border-black focus:ring-black px-4 py-3 text-base font-light"
                   />
                   {errors.email && (
-                    <p className="text-red-500 text-sm mt-1 font-light">
+                    <p className="text-[#bd5b4c] text-sm mt-1 font-light">
                       {errors.email.message}
                     </p>
                   )}
@@ -916,7 +916,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     className="block w-full rounded-md border border-gray-400  shadow-sm focus:border-black focus:ring-black px-4 py-3 text-base font-light"
                   />
                   {errors.phone && (
-                    <p className="text-red-500 text-sm mt-1 font-light">
+                    <p className="text-[#bd5b4c] text-sm mt-1 font-light">
                       {errors.phone.message}
                     </p>
                   )}
@@ -951,7 +951,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     min="1"
                   />
                   {errors.quantity && (
-                    <p className="text-red-500 text-sm mt-1 font-light">
+                    <p className="text-[#bd5b4c] text-sm mt-1 font-light">
                       {errors.quantity.message}
                     </p>
                   )}
@@ -980,7 +980,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     ))}
                   </select>
                   {errors.tileSize && (
-                    <p className="text-red-500 text-sm mt-1 font-light">
+                    <p className="text-[#bd5b4c] text-sm mt-1 font-light">
                       {errors.tileSize.message}
                     </p>
                   )}

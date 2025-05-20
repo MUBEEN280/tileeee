@@ -316,13 +316,13 @@ const ColorEditor = ({ tile }) => {
           <button
             className={`flex justify-center items-center gap-2 
     ${selectedBorder
-                ? "bg-red-600 hover:bg-red-700"
+                ? "bg-[#bd5b4c] hover:bg-red-700"
                 : "bg-black hover:bg-black/90"
               }
     text-white font-poppins font-light py-2 px-4 rounded-md 
     ${selectedBorder
-                ? "ring-2 ring-red-500 shadow-md shadow-red-500"
-                : "hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500"
+                ? "ring-2 ring-[#bd5b4c] shadow-md shadow-[#bd5b4c]"
+                : "hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c]"
               } 
     transition duration-300 ease-in-out`}
             onClick={handleAddOrRemoveBorders}
@@ -343,8 +343,8 @@ const ColorEditor = ({ tile }) => {
       return (
         <div key={`color-used-${index}-${color}`} className="flex flex-col items-center group">
           <button
-            className={`w-6 h-6 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-red-500
-              ${isActive ? "rounded-full  ring-1 ring-offset-1 ring-red-500" : "rounded-md hover:ring-2 hover:ring-red-500"}
+            className={`w-6 h-6 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-[#bd5b4c]
+              ${isActive ? "rounded-full  ring-1 ring-offset-1 ring-[#bd5b4c]" : "rounded-md hover:ring-2 hover:ring-[#bd5b4c]"}
               ${isActive ? "group-hover:rounded-full" : ""}
             `}
             style={{ backgroundColor: color }}
@@ -374,8 +374,8 @@ const ColorEditor = ({ tile }) => {
         <button
           className={`w-6 h-6 transition-all duration-300 ease-in-out transform hover:scale-110
             ${isActive
-              ? "rounded-full ring-2 ring-red-500"
-              : "rounded-md group-hover:rounded-full group-hover:ring-1 group-hover:ring-red-500 transition-all duration-300 ease-in-out"
+              ? "rounded-full ring-2 ring-[#bd5b4c]"
+              : "rounded-md group-hover:rounded-full group-hover:ring-1 group-hover:ring-[#bd5b4c] transition-all duration-300 ease-in-out"
             }`}
           style={{ backgroundColor: paletteColor }}
           title={paletteColor}

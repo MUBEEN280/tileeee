@@ -373,7 +373,7 @@ const TileCanvasView = ({
               />
               <button
                 onClick={() => setActiveEnv(null)}
-                className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50 hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out"
+                className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50 hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out"
               >
                 <IoMdClose size={20} />
               </button>
@@ -382,7 +382,7 @@ const TileCanvasView = ({
         </div>
 
         <button
-          className="absolute bottom-2 right-2 text-white bg-black p-1 rounded z-50 hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out"
+          className="absolute bottom-2 right-2 text-white bg-black p-1 rounded z-50 hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? <MdCloseFullscreen size={20} /> : <MdFullscreen size={20} />}
@@ -472,7 +472,7 @@ const TileCanvasView = ({
                     />
                     <button
                       onClick={() => setActiveEnv(null)}
-                      className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50  hover:ring-2 hover:ring-red-500 hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out"
+                      className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50  hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out"
                     >
                       <IoMdClose size={20} />
                     </button>
@@ -493,7 +493,7 @@ const TileCanvasView = ({
             {environments.map((env) => (
               <button
                 key={env.label}
-                className={`p-3 border text-2xl sm:text-3xl hover:bg-black hover:text-white hover:ring-2 hover:ring-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out ${activeEnv === env.label ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
+                className={`p-3 border text-2xl sm:text-3xl hover:bg-black hover:text-white hover:ring-2 hover:ring-[#bd5b4c] hover:rounded-md hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out ${activeEnv === env.label ? "bg-black text-white border border-[#bd5b4c] rounded-md shadow-md shadow-[#bd5b4c]" : "bg-white text-black"
                   } rounded`}
                 onClick={() => setActiveEnv(env.label)}
               >
@@ -524,14 +524,14 @@ const TileCanvasView = ({
               const isSelected = localSize === size;
               const isLarge = size === "12x12";
               const baseClasses =
-                " px-3 py-1  tracking-wide flex flex-col items-center gap-1 hover:bg-black hover:text-white hover:ring-2 hover:ring-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out";
+                " px-3 py-1  tracking-wide flex flex-col items-center gap-1 hover:bg-black hover:text-white hover:ring-2 hover:ring-[#bd5b4c] hover:rounded-md hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out";
               const textSize = isLarge ? "text-sm font-light font-poppins" : "text-xs font-light font-poppins"; // larger text for 12x12
               const iconSize = isLarge ? 30 : 22; // larger icon for 12x12
               return (
                 <button
                   key={size}
                   onClick={() => setLocalSize(size)}
-                  className={`${baseClasses} ${textSize} ${isSelected ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
+                  className={`${baseClasses} ${textSize} ${isSelected ? "bg-black text-white border border-[#bd5b4c] rounded-md shadow-md shadow-[#bd5b4c]" : "bg-white text-black"
                     }`}
                 >
                   {Icon && <Icon size={iconSize} />}
@@ -552,7 +552,7 @@ const TileCanvasView = ({
             {groutColors.map((color, index) => (
               <div
                 key={index}
-                className={`w-6 h-6 rounded-full border cursor-pointer hover:ring-1 hover:ring-red-500 transition-all duration-300 ease-in-out ${localGroutColor === color ? "ring-2 ring-red-500" : ""
+                className={`w-6 h-6 rounded-full border cursor-pointer hover:ring-1 hover:ring-[#bd5b4c] transition-all duration-300 ease-in-out ${localGroutColor === color ? "ring-2 ring-[#bd5b4c]" : ""
                   }`}
                 style={{ backgroundColor: color }}
                 onClick={() => setLocalGroutColor(color)}
@@ -569,7 +569,7 @@ const TileCanvasView = ({
               <button
                 key={level}
                 onClick={() => setLocalThickness(level)}
-                className={`border px-3 py-1 uppercase text-xs tracking-wide font-light font-poppins hover:bg-black hover:text-white hover:ring-1 hover:ring-red-500 hover:rounded-md hover:shadow-md hover:shadow-red-500 transition-all duration-300 ease-in-out ${localThickness === level ? "bg-black text-white border border-red-500 rounded-md shadow-md shadow-red-500" : "bg-white text-black"
+                className={`border px-3 py-1 uppercase text-xs tracking-wide font-light font-poppins hover:bg-black hover:text-white hover:ring-1 hover:ring-[#bd5b4c] hover:rounded-md hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out ${localThickness === level ? "bg-black text-white border border-[#bd5b4c] rounded-md shadow-md shadow-[#bd5b4c]" : "bg-white text-black"
                   }`}
               >
                 {level}
