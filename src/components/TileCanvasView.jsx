@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { FaBed, FaUtensils, FaBath, FaStore, FaWarehouse } from "react-icons/fa";
 import { MdCloseFullscreen, MdFullscreen } from "react-icons/md";
 import { IoMdClose } from "react-icons/io";
@@ -6,7 +6,7 @@ import { IoGridSharp } from "react-icons/io5";
 import SaveButton from "./buttons/SaveButton";
 import ShopButton from "./buttons/ShopButton";
 import TileModal from "./TileModals";
-
+import { useTileSimulator } from "../context/TileSimulatorContext";
 
 const environments = [
   { icon: <FaBed />, label: "bedroom", image: "/Images/bedroomjpg.png" },
@@ -29,8 +29,9 @@ const TileCanvasView = ({
   tileMasks,
   borderMasks,
   selectedBorder,
-  blockRotations = [0, 0, 0, 0]
 }) => {
+  const { blockRotations } = useTileSimulator();
+
   const [activeEnv, setActiveEnv] = useState(() => {
     const savedEnv = localStorage.getItem('activeEnv');
     return savedEnv || null;
@@ -51,33 +52,28 @@ const TileCanvasView = ({
     return (savedSize === "8x8" || savedSize === "12x12") ? savedSize : "12x12";
   });
 
-
   const [isExpanded, setIsExpanded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loadedImages, setLoadedImages] = useState(new Map());
-
-  const canvasRef = useRef(null);
-  const expandedCanvasRef = useRef(null);
 
   const currentEnv = environments.find((env) => env.label === activeEnv);
 
-  const sizeToPx = {
-    "8x8": 8,    // 8 inches
-    "12x12": 12, // 12 inches
-  };
+  // Calculate grid size based on selected size
+  const gridSize = localSize === "8x8" ? 8 : 12;
+  const totalTiles = gridSize * gridSize;
 
-  // Convert size to pixels for display
+  // Calculate container dimensions
+  const containerWidth = 1200;
+  const containerHeight = 600; 
+
+  // Calculate tile size in pixels
   const getTileSizeInPx = (size) => {
-    const inches = sizeToPx[size] || 12;
-    // Reverse the scale - larger number for smaller tiles
-    // 8x8 should be largest, 16x16 should be smallest
-    const scale = 96 - (inches * 4); // This will give us 64px for 8x8, 48px for 12x12, 
-    return `${scale}px`;
+    const baseSize = size === "8x8" ? 8 : 12;
+    const containerWidth = 1200; // Base container width
+    const tileSize = containerWidth / baseSize;
+    return `${tileSize}px`;
   };
 
-  // Get the actual pixel size for the current tile
-  const tileBgSize = getTileSizeInPx(localSize);
-  const tileSizePx = tileBgSize;
+  const tileSizePx = getTileSizeInPx(localSize);
 
   const thicknessToPx = {
     none: "0px",
@@ -86,168 +82,17 @@ const TileCanvasView = ({
   };
   const groutThicknessPx = thicknessToPx[localThickness] || "2px";
 
-  // Function to load and cache images
-  const loadImage = (src) => {
-    if (loadedImages.has(src)) {
-      return Promise.resolve(loadedImages.get(src));
-    }
-
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-
-      img.onload = () => {
-        loadedImages.set(src, img);
-        resolve(img);
-      };
-
-      img.onerror = (e) => {
-        console.error('Error loading image:', src, e);
-        reject(new Error(`Failed to load image: ${src}`));
-      };
-
-      img.src = src;
-    });
-  };
-
-  // Function to draw tiles on a canvas
-  const drawTilesOnCanvas = async (canvas, ctx) => {
-    if (!canvas || !selectedTile) return;
-
-    // Always use a 2x2 grid for the environment view
-    const gridSize = 2;
-    const tileSize = canvas.width / gridSize;
-
-    // Helper to get transformOrigin for each block
-    const getTransformOrigin = (blockIndex) => {
-      return [
-        blockIndex % 2 === 0 ? 0 : 1, // x: 0 for left, 1 for right
-        blockIndex < 2 ? 0 : 1        // y: 0 for top, 1 for bottom
-      ];
-    };
-
-    // Draw tiles in a 2x2 grid pattern
-    for (let row = 0; row < gridSize; row++) {
-      for (let col = 0; col < gridSize; col++) {
-        const x = col * tileSize;
-        const y = row * tileSize;
-        const blockIndex = row * gridSize + col;
-
-        // Calculate transform origin for this block
-        const [originX, originY] = getTransformOrigin(blockIndex);
-
-        // Draw base tile with scale(2) and correct origin, plus rotation
-        if (selectedTile.image) {
-          try {
-            let baseImage = null;
-            baseImage = await loadImage(selectedTile.image);
-
-            ctx.save();
-            // Move to the block's top-left corner
-            ctx.translate(x, y);
-            // Move to the transform origin within the block
-            ctx.translate(originX * tileSize, originY * tileSize);
-            // Apply rotation
-            ctx.rotate((blockRotations[blockIndex] * Math.PI) / 180);
-            // Move back by the origin
-            ctx.translate(-originX * tileSize, -originY * tileSize);
-            // Scale up by 2x
-            ctx.scale(2, 2);
-            // Draw the image so that only the relevant quadrant is visible
-            ctx.drawImage(baseImage, 0, 0, tileSize, tileSize);
-            ctx.restore();
-          } catch (error) {
-            console.error('Failed to load base tile image:', error);
-          }
-        }
-
-        // Load mask images
-        const maskImages = [];
-        if (tileMasks && tileMasks.length > 0) {
-          for (const mask of tileMasks) {
-            if (mask.image) {
-              try {
-                const maskImg = await loadImage(mask.image);
-                maskImages.push({ image: maskImg, mask });
-              } catch (error) {
-                console.error('Failed to load mask image:', error);
-              }
-            }
-          }
-        }
-
-        // Draw masks with the same logic
-        maskImages.forEach(({ image, mask }) => {
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.translate(originX * tileSize, originY * tileSize);
-          ctx.rotate((blockRotations[blockIndex] * Math.PI) / 180);
-          ctx.translate(-originX * tileSize, -originY * tileSize);
-          ctx.scale(2, 2);
-          ctx.globalCompositeOperation = 'source-in';
-          ctx.drawImage(image, 0, 0, tileSize, tileSize);
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = mask.color;
-          ctx.fillRect(0, 0, tileSize, tileSize);
-          ctx.restore();
-        });
-
-        // Draw grout with proper scaling (optional for 2x2)
-        if (localThickness !== "none") {
-          const groutWidth = parseInt(groutThicknessPx);
-          ctx.fillStyle = localGroutColor;
-          // Vertical grout
-          ctx.fillRect(x - groutWidth / 2, y, groutWidth, tileSize);
-          // Horizontal grout
-          ctx.fillRect(x, y - groutWidth / 2, tileSize, groutWidth);
-        }
-      }
-    }
-
-    // Add size indicator with more visible styling
-    ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.font = 'bold 20px Arial';
-    ctx.fillText(`${sizeToPx[selectedSize] || 12}" x ${sizeToPx[selectedSize] || 12}"`, 20, 40);
-    ctx.restore();
-
-  };
-
-  // Effect to draw on main canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size to maintain aspect ratio
-    canvas.width = 500;
-    canvas.height = 500;
-
-    drawTilesOnCanvas(canvas, ctx);
-  }, [selectedTile, selectedColor, selectedSize, localThickness, localGroutColor, tileMasks]);
-
-  // Effect to draw on expanded canvas
-  useEffect(() => {
-    if (isExpanded) {
-      const canvas = expandedCanvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      canvas.width = 1200;
-      canvas.height = 800;
-
-      drawTilesOnCanvas(canvas, ctx);
-    }
-  }, [isExpanded, selectedTile, selectedColor, localSize, localThickness, localGroutColor, tileMasks]);
+  // Define 4 background positions for 2x2 split
+  const tileStyles = [
+    'bg-[0%_0%]',     // Top-left
+    'bg-[100%_0%]',   // Top-right
+    'bg-[0%_100%]',   // Bottom-left
+    'bg-[100%_100%]', // Bottom-right
+  ];
 
   const handleSave = () => {
     setIsModalOpen(true);
   };
-
 
   if (!selectedTile) {
     return (
@@ -262,54 +107,105 @@ const TileCanvasView = ({
 
   return (
     <div className={`max-w-4xl mx-auto lg:mx-0 p-1 ${isExpanded ? "h-screen" : ""}`}>
-      <h2 className="text-center lg:text-left font-light font-poppins  text-xl tracking-widest mb-2">TILE VISUALIZER</h2>
+      <h2 className="text-center lg:text-left font-light font-poppins text-xl tracking-widest mb-2">TILE VISUALIZER</h2>
       <div className="relative mb-6">
         <div
           className={`w-full rounded shadow ${isExpanded ? "h-full" : ""}`}
           style={{
             position: "relative",
             overflow: "hidden",
-            minHeight: "200px"
+            width: `${containerWidth}px`,
+            height: `${containerHeight}px`,
+            maxWidth: "100%",
+            margin: "0 auto"
           }}
         >
-          {/* Original Tile Image */}
-          {selectedTile && (
-            <div className="relative w-full max-h-[500px]">
-              <canvas
-                ref={canvasRef}
-                className="w-full h-full object-contain bg-gray-100"
-              />
+          {/* Tile Grid Container */}
+          <div className="relative" style={{ minHeight: "500px" }}>
+            <div className="relative w-full h-full" style={{ minHeight: "500px" }}>
+              <div
+                className="grid bg-white"
+                style={{
+                  gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                  gap: localThickness !== "none" ? groutThicknessPx : "0px",
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: localGroutColor,
+                }}
+              >
+                {Array.from({ length: totalTiles }).map((_, index) => {
+                  const patternIndex = (index % 2) + 2 * (Math.floor(index / gridSize) % 2);
+                  const bgPos = tileStyles[patternIndex];
 
-              {/* Mask Layers */}
-              {tileMasks && tileMasks.map(mask => (
-                <div
-                  key={mask.id}
-                  className="absolute inset-0"
-                  style={{
-                    backgroundColor: mask.color,
-                    maskImage: `url(${mask.image})`,
-                    WebkitMaskImage: `url(${mask.image})`,
-                    maskSize: tileBgSize,
-                    WebkitMaskSize: tileBgSize,
-                    maskPosition: 'center',
-                    WebkitMaskPosition: 'center',
-                    maskRepeat: 'repeat',
-                    WebkitMaskRepeat: 'repeat',
-                    mixBlendMode: 'source-in',
-                    zIndex: 1
-                  }}
-                />
-              ))}
+                  // Calculate the block index for rotation (0-3 for each 2x2 block)
+                  const blockIndex = (index % 2) + 2 * (Math.floor((index % gridSize) / 2) + Math.floor(index / (gridSize * 2)) * 2);
+
+                  return (
+                    <div
+                      key={index}
+                      className="relative bg-white"
+                      style={{
+                        width: "100%",
+                        aspectRatio: "1 / 1",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Base Tile */}
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          transform: `rotate(${blockRotations[blockIndex % 4] || 0}deg)`,
+                          transition: "transform 0.3s ease-in-out",
+                        }}
+                      >
+                        {selectedTile?.image && (
+                          <img
+                            src={selectedTile.image}
+                            alt={`Tile Block ${index + 1}`}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            style={{
+                              transform: `scale(2)`,
+                              transformOrigin: `${index % 2 === 0 ? '0' : '100%'} ${index < gridSize ? '0' : '100%'}`,
+                            }}
+                          />
+                        )}
+
+                        {/* Tile Masks */}
+                        {tileMasks?.map((mask) => (
+                          <div
+                            key={mask.id}
+                            className="absolute inset-0"
+                            style={{
+                              backgroundColor: mask.color,
+                              maskImage: mask.image ? `url(${mask.image})` : 'none',
+                              WebkitMaskImage: mask.image ? `url(${mask.image})` : 'none',
+                              maskSize: "cover",
+                              WebkitMaskSize: "cover",
+                              maskPosition: "center",
+                              WebkitMaskPosition: "center",
+                              maskRepeat: "no-repeat",
+                              WebkitMaskRepeat: "no-repeat",
+                              transform: `scale(2)`,
+                              transformOrigin: `${index % 2 === 0 ? '0' : '100%'} ${index < gridSize ? '0' : '100%'}`,
+                              zIndex: 1,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
               {/* Border Mask Layers */}
-              {selectedBorder && borderMasks && borderMasks.map(mask => (
+              {selectedBorder && borderMasks?.map(mask => (
                 <div
                   key={mask.maskId}
                   className="absolute inset-0"
                   style={{
                     backgroundColor: mask.color,
-                    maskImage: `url(${mask.image})`,
-                    WebkitMaskImage: `url(${mask.image})`,
+                    maskImage: mask.image ? `url(${mask.image})` : 'none',
+                    WebkitMaskImage: mask.image ? `url(${mask.image})` : 'none',
                     maskSize: '100%',
                     WebkitMaskSize: '100%',
                     maskPosition: 'center',
@@ -323,62 +219,27 @@ const TileCanvasView = ({
                 />
               ))}
 
-              {/* Updated Grout overlay */}
-              {localThickness !== "none" && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    pointerEvents: "none",
-                    backgroundImage: `
-                      repeating-linear-gradient(
-                        to right,
-                        ${localGroutColor},
-                        ${localGroutColor} ${groutThicknessPx},
-                        transparent ${groutThicknessPx},
-                        transparent ${tileSizePx}
-                      ),
-                      repeating-linear-gradient(
-                        to bottom,
-                        ${localGroutColor},
-                        ${localGroutColor} ${groutThicknessPx},
-                        transparent ${groutThicknessPx},
-                        transparent ${tileSizePx}
-                      )
-                    `,
-                    backgroundSize: `${tileSizePx} ${tileSizePx}`,
-                    backgroundRepeat: "repeat",
-                    backgroundPosition: "center",
-                    opacity: 1,
-                    zIndex: 2
-                  }}
-                />
+              {/* Environment Image */}
+              {currentEnv && (
+                <>
+                  <img
+                    src={currentEnv.image}
+                    alt="Room preview"
+                    className="w-full h-full object-cover absolute inset-0"
+                    style={{
+                      zIndex: 3
+                    }}
+                  />
+                  <button
+                    onClick={() => setActiveEnv(null)}
+                    className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50 hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out"
+                  >
+                    <IoMdClose size={20} />
+                  </button>
+                </>
               )}
             </div>
-          )}
-
-          {/* Environment Image */}
-          {currentEnv && (
-            <>
-              <img
-                src={currentEnv.image}
-                alt="Room preview"
-                className="w-full h-full object-cover absolute inset-0"
-                style={{
-                  zIndex: 3
-                }}
-              />
-              <button
-                onClick={() => setActiveEnv(null)}
-                className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50 hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out"
-              >
-                <IoMdClose size={20} />
-              </button>
-            </>
-          )}
+          </div>
         </div>
 
         <button
@@ -396,69 +257,110 @@ const TileCanvasView = ({
             <div className="absolute bottom-2 right-2 z-50">
               <button
                 onClick={() => setIsExpanded(false)}
-                className="bg-black bg-opacity-70 text-white rounded-full p-1 hover:bg-opacity-90 transition "
+                className="bg-black bg-opacity-70 text-white rounded-full p-1 hover:bg-opacity-90 transition"
               >
                 <MdCloseFullscreen size={20} />
               </button>
             </div>
             <div className="relative" style={{ minHeight: "500px" }}>
-              {/* Tile image and overlays as full background */}
+              {/* Tile Grid Container */}
               <div className="relative w-full h-full" style={{ minHeight: "500px" }}>
-                {/* Mask Layers */}
-                {tileMasks && tileMasks.map(mask => (
+                <div
+                  className="grid bg-white"
+                  style={{
+                    gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                    gap: localThickness !== "none" ? groutThicknessPx : "0px",
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: localGroutColor,
+                  }}
+                >
+                  {Array.from({ length: totalTiles }).map((_, index) => {
+                    const patternIndex = (index % 2) + 2 * (Math.floor(index / gridSize) % 2);
+                    const bgPos = tileStyles[patternIndex];
+
+                    // Calculate the block index for rotation (0-3 for each 2x2 block)
+                    const blockIndex = (index % 2) + 2 * (Math.floor((index % gridSize) / 2) + Math.floor(index / (gridSize * 2)) * 2);
+
+                    return (
+                      <div
+                        key={index}
+                        className="relative bg-white"
+                        style={{
+                          aspectRatio: "1 / 1",
+                          width: "100%",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {/* Base Tile */}
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            transform: `rotate(${blockRotations[blockIndex % 4] || 0}deg)`,
+                            transition: "transform 0.3s ease-in-out",
+                          }}
+                        >
+                          {selectedTile?.image && (
+                            <img
+                              src={selectedTile.image}
+                              alt={`Tile Block ${index + 1}`}
+                              className="absolute inset-0 w-full h-full object-cover"
+                              style={{
+                                transform: `scale(2)`,
+                                transformOrigin: `${index % 2 === 0 ? '0' : '100%'} ${index < gridSize ? '0' : '100%'}`,
+                              }}
+                            />
+                          )}
+
+                          {/* Tile Masks */}
+                          {tileMasks?.map((mask) => (
+                            <div
+                              key={mask.id}
+                              className="absolute inset-0"
+                              style={{
+                                backgroundColor: mask.color,
+                                maskImage: mask.image ? `url(${mask.image})` : 'none',
+                                WebkitMaskImage: mask.image ? `url(${mask.image})` : 'none',
+                                maskSize: "cover",
+                                WebkitMaskSize: "cover",
+                                maskPosition: "center",
+                                WebkitMaskPosition: "center",
+                                maskRepeat: "no-repeat",
+                                WebkitMaskRepeat: "no-repeat",
+                                transform: `scale(2)`,
+                                transformOrigin: `${index % 2 === 0 ? '0' : '100%'} ${index < gridSize ? '0' : '100%'}`,
+                                zIndex: 1,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Border Mask Layers */}
+                {selectedBorder && borderMasks?.map(mask => (
                   <div
-                    key={mask.id}
+                    key={mask.maskId}
                     className="absolute inset-0"
                     style={{
                       backgroundColor: mask.color,
-                      maskImage: `url(${mask.image})`,
-                      WebkitMaskImage: `url(${mask.image})`,
-                      maskSize: tileBgSize,
-                      WebkitMaskSize: tileBgSize,
+                      maskImage: mask.image ? `url(${mask.image})` : 'none',
+                      WebkitMaskImage: mask.image ? `url(${mask.image})` : 'none',
+                      maskSize: '100%',
+                      WebkitMaskSize: '100%',
                       maskPosition: 'center',
                       WebkitMaskPosition: 'center',
-                      maskRepeat: 'repeat',
-                      WebkitMaskRepeat: 'repeat',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskRepeat: 'no-repeat',
                       mixBlendMode: 'source-in',
-                      opacity: 0.8,
-                      zIndex: 1
+                      zIndex: 3,
+                      clipPath: 'polygon(0 0, 5% 0, 5% 5%, 0 5%, 0 0, 100% 0, 100% 5%, 95% 5%, 95% 0, 100% 0, 100% 100%, 95% 100%, 95% 95%, 100% 95%, 100% 100%, 0 100%, 0 95%, 5% 95%, 5% 100%, 0 100%)'
                     }}
                   />
                 ))}
-                {/* Grout overlay */}
-                {localThickness !== "none" && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      pointerEvents: "none",
-                      backgroundImage: `
-                  repeating-linear-gradient(
-                    to right,
-                    ${localGroutColor},
-                    ${localGroutColor} ${groutThicknessPx},
-                    transparent ${groutThicknessPx},
-                    transparent ${tileSizePx}
-                  ),
-                  repeating-linear-gradient(
-                    to bottom,
-                    ${localGroutColor},
-                    ${localGroutColor} ${groutThicknessPx},
-                    transparent ${groutThicknessPx},
-                    transparent ${tileSizePx}
-                  )
-                `,
-                      backgroundSize: `${tileSizePx} ${tileSizePx}`,
-                      backgroundRepeat: "repeat",
-                      backgroundPosition: "center",
-                      opacity: 1,
-                      zIndex: 2
-                    }}
-                  />
-                )}
+
                 {/* Environment Image */}
                 {currentEnv && (
                   <>
@@ -472,7 +374,7 @@ const TileCanvasView = ({
                     />
                     <button
                       onClick={() => setActiveEnv(null)}
-                      className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50  hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out"
+                      className="absolute top-3 right-3 bg-black bg-opacity-70 text-white rounded-full p-1 z-50 hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out"
                     >
                       <IoMdClose size={20} />
                     </button>
@@ -507,31 +409,24 @@ const TileCanvasView = ({
         <div className="pr-2">
           <br />
           <div className="flex gap-2">
-            {Object.keys(sizeToPx).map((size) => {
-              let Icon;
-              switch (size) {
-                case "8x8":
-                  Icon = IoGridSharp;
-                  break;
-                case "12x12":
-                  Icon = IoGridSharp;
-                  break;
-                default:
-                  Icon = null;
-              }
+            {["8x8", "12x12"].map((size) => {
+              let Icon = IoGridSharp;
 
               // Conditional classes for scaling
               const isSelected = localSize === size;
               const isLarge = size === "12x12";
               const baseClasses =
-                " px-3 py-1  tracking-wide flex flex-col items-center gap-1 hover:bg-black hover:text-white hover:ring-2 hover:ring-[#bd5b4c] hover:rounded-md hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out";
-              const textSize = isLarge ? "text-sm font-light font-poppins" : "text-xs font-light font-poppins"; // larger text for 12x12
-              const iconSize = isLarge ? 30 : 22; // larger icon for 12x12
+                "px-3 py-1 tracking-wide flex flex-col items-center gap-1 hover:bg-black hover:text-white hover:ring-2 hover:ring-[#bd5b4c] hover:rounded-md hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out";
+              const textSize = isLarge ? "text-sm font-light font-poppins" : "text-xs font-light font-poppins";
+              const iconSize = isLarge ? 30 : 22;
+
               return (
                 <button
                   key={size}
                   onClick={() => setLocalSize(size)}
-                  className={`${baseClasses} ${textSize} ${isSelected ? "bg-black text-white border border-[#bd5b4c] rounded-md shadow-md shadow-[#bd5b4c]" : "bg-white text-black"
+                  className={`${baseClasses} ${textSize} ${isSelected
+                      ? "bg-black text-white border border-[#bd5b4c] rounded-md shadow-md shadow-[#bd5b4c]"
+                      : "bg-white text-black"
                     }`}
                 >
                   {Icon && <Icon size={iconSize} />}
@@ -541,13 +436,13 @@ const TileCanvasView = ({
             })}
           </div>
         </div>
-
       </div>
+
       {/* Grout Controls */}
       <div className="flex flex-col sm:flex-row gap-6 mb-6">
         {/* Grout Color */}
         <div className="">
-          <div className="text-sm  mb-2 tracking-wider font-light font-poppins">GROUT COLOR:</div>
+          <div className="text-sm mb-2 tracking-wider font-light font-poppins">GROUT COLOR:</div>
           <div className="flex gap-4">
             {groutColors.map((color, index) => (
               <div
@@ -555,7 +450,10 @@ const TileCanvasView = ({
                 className={`w-6 h-6 rounded-full border cursor-pointer hover:ring-1 hover:ring-[#bd5b4c] transition-all duration-300 ease-in-out ${localGroutColor === color ? "ring-2 ring-[#bd5b4c]" : ""
                   }`}
                 style={{ backgroundColor: color }}
-                onClick={() => setLocalGroutColor(color)}
+                onClick={() => {
+                  setLocalGroutColor(color);
+                  localStorage.setItem('groutColor', color);
+                }}
               />
             ))}
           </div>

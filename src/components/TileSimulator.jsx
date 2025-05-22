@@ -112,6 +112,7 @@ const TileSimulator = () => {
             tileMasks={tileMasks}
             borderMasks={borderMasks}
             selectedBorder={selectedBorder}
+            
           />
         </div>
       </motion.div>

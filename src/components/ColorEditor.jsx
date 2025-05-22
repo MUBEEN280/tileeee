@@ -13,6 +13,8 @@ const ColorEditor = ({ tile }) => {
     setSelectedCategory,
     borderMasks,
     setBorderMaskColor,
+    blockRotations,
+    rotateBlock,
   } = useTileSimulator();
 
   const [hoveredPaletteColor, setHoveredPaletteColor] = useState(null);
@@ -24,14 +26,8 @@ const ColorEditor = ({ tile }) => {
     borderMasks && borderMasks.length > 0 ? borderMasks[0].maskId : null
   );
 
-  const [blockRotations, setBlockRotations] = useState([0, 0, 0, 0]); // Rotation degrees for each block
   const [hoveredBlockIndex, setHoveredBlockIndex] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const rotateBlock = (blockIndex) => {
-    const newRotations = [...blockRotations];
-    newRotations[blockIndex] = (newRotations[blockIndex] + 90) % 360; // Rotate by 90 degrees
-    setBlockRotations(newRotations);
-  };
 
   if (!tile || !Array.isArray(tileMasks)) return null;
 
@@ -155,12 +151,12 @@ const ColorEditor = ({ tile }) => {
   return (
     <div className="pb-4 p-1">
       <div className="mb-4">
-        <h4 className="text-md mb-2 font-light font-poppins text-center lg:text-left uppercase tracking-wide">
+        <h4 className="text-md mb-2 font-light font-poppins text-center uppercase tracking-wide">
           Edit Tile : {tile.name}
         </h4>
 
         {/* Tile Preview */}
-        <div className="mb-4 aspect-square max-w-xs mx-auto lg:mx-0 relative">
+        <div className="mb-4 aspect-square max-w-xs mx-auto relative">
           <div
             className="relative w-full h-full rounded-lg overflow-hidden"
             style={{
@@ -174,7 +170,7 @@ const ColorEditor = ({ tile }) => {
               <img
                 src={borderMasks[0].image || selectedBorder}
                 alt="Tile Border"
-                className="absolute left-1/2 top-1/2 pointer-events-none "
+                className="absolute left-1/2 top-1/2 pointer-events-none"
                 style={{
                   width: 1200,
                   height: 500,
@@ -199,7 +195,7 @@ const ColorEditor = ({ tile }) => {
               {[0, 1, 2, 3].map((blockIndex) => (
                 <div
                   key={blockIndex}
-                  className="relative group "
+                  className="relative group"
                   style={{
                     width: "100%",
                     height: "100%",
@@ -214,7 +210,6 @@ const ColorEditor = ({ tile }) => {
                       y: e.clientY - rect.top,
                     });
                   }}
-
                 >
                   {/* Tile Block */}
                   <div
@@ -260,7 +255,6 @@ const ColorEditor = ({ tile }) => {
 
                   {/* Rotation Button - Always show on hover */}
                   {hoveredBlockIndex === blockIndex && (
-
                     <button
                       className="absolute bg-black/50 text-white p-2 rounded-full 
                transition-opacity duration-300 hover:bg-black/70 z-20 cursor-pointer"
@@ -274,9 +268,6 @@ const ColorEditor = ({ tile }) => {
                     >
                       <IoMdRefresh className="w-3 h-3" />
                     </button>
-
-
-
                   )}
                 </div>
               ))}
@@ -311,96 +302,91 @@ const ColorEditor = ({ tile }) => {
           </div>
         </div>
 
-        {/* Add/Remove Border Button */}
-        <div className="mb-4 flex justify-center items-center lg:justify-start lg:items-start gap-2">
+        {/* Border Controls */}
+        <div className="mb-4 text-center">
           <button
-            className={`flex justify-center items-center gap-2 
-    ${selectedBorder
-                ? "bg-[#bd5b4c] hover:bg-red-700"
-                : "bg-black hover:bg-black/90"
-              }
-    text-white font-poppins font-light py-2 px-4 rounded-md 
-    ${selectedBorder
-                ? "ring-2 ring-[#bd5b4c] shadow-md shadow-[#bd5b4c]"
-                : "hover:ring-2 hover:ring-[#bd5b4c] hover:shadow-md hover:shadow-[#bd5b4c]"
-              } 
-    transition duration-300 ease-in-out`}
             onClick={handleAddOrRemoveBorders}
+            className={`px-4 py-2 rounded-md transition-all duration-300 ease-in-out ${
+              selectedBorder
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
           >
-            <span>{selectedBorder ? <FaTimes /> : <FaPlus />}</span>
-            <span>{selectedBorder ? "Remove Border" : "Add Border"}</span>
+            {selectedBorder ? "Remove Border" : "Add Border"}
           </button>
         </div>
 
         {/* Colors Used */}
-      <div className="mb-4">
-  <h4 className="mb-2 font-light font-poppins text-center lg:text-left">
-    Colors Used
-  </h4>
-  <div className="flex justify-center items-center lg:justify-start lg:items-start flex-wrap gap-2">
-    {Array.from(getUniqueColors().entries()).map(([color, data], index) => {
-      const isActive = selectedMaskColor === color;
-      return (
-        <div key={`color-used-${index}-${color}`} className="flex flex-col items-center group">
-          <button
-            className={`w-6 h-6 transition-all duration-300 ease-in-out focus:outline-none focus:ring-1 focus:ring-[#bd5b4c]
-              ${isActive ? "rounded-full  ring-1 ring-offset-1 ring-[#bd5b4c]" : "rounded-md hover:ring-2 hover:ring-[#bd5b4c]"}
-              ${isActive ? "group-hover:rounded-full" : ""}
-            `}
-            style={{ backgroundColor: color }}
-            title={`${color}${data.hasBorder ? " (Border)" : " (Tile)"}`}
-            onClick={() => handleColorUsedClick(color)}
-          />
-          {/* Border appears under the button only when active and hovered */}
-          {isActive && (
-            <div className=" mt-1 rounded-full"></div>
-          )}
+        <div className="mb-4 text-center">
+          <div className="text-sm mb-2 tracking-wider font-light font-poppins">COLORS USED:</div>
+          <div className="flex flex-wrap gap-4 justify-center">
+            {Array.from(getUniqueColors()).map(([color, info]) => (
+              <div
+                key={color}
+                className="flex flex-col items-center group"
+              >
+                <button
+                  className={`w-6 h-6 transition-all duration-300 ease-in-out transform hover:scale-110
+                    ${selectedMaskColor === color
+                      ? "rounded-full ring-2 ring-[#bd5b4c]"
+                      : "rounded-md group-hover:rounded-full group-hover:ring-1 group-hover:ring-[#bd5b4c] transition-all duration-300 ease-in-out"
+                    }`}
+                  style={{ backgroundColor: color }}
+                  title={`${color} (${info.type})`}
+                  onClick={() => handleColorUsedClick(color)}
+                />
+                {/* Show colored stripe under active color */}
+                {selectedMaskColor === color && (
+                  <div
+                    className="mt-1 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      );
-    })}
-  </div>
-</div>
-
 
         {/* Color Palette */}
-      <div className="w-full flex flex-wrap justify-center gap-2 bg-gray-100 rounded-lg pt-2 shadow-inner max-w-xs mx-auto lg:mx-0">
-  {allAvailableColors.map((paletteColor, index) => {
-    const isActive = selectedMaskColor === paletteColor;
-    return (
-      <div
-        key={`palette-color-${index}-${paletteColor}`}
-        className="flex flex-col items-center group"
-      >
-        <button
-          className={`w-6 h-6 transition-all duration-300 ease-in-out transform hover:scale-110
-            ${isActive
-              ? "rounded-full ring-2 ring-[#bd5b4c]"
-              : "rounded-md group-hover:rounded-full group-hover:ring-1 group-hover:ring-[#bd5b4c] transition-all duration-300 ease-in-out"
-            }`}
-          style={{ backgroundColor: paletteColor }}
-          title={paletteColor}
-          onClick={() => handlePaletteColorSelect(paletteColor)}
-          onMouseEnter={() => {
-            setPreviewMode(true);
-            setHoveredPaletteColor(paletteColor);
-          }}
-          onMouseLeave={() => {
-            setPreviewMode(false);
-            setHoveredPaletteColor(null);
-          }}
-        />
-        {/* Show colored stripe under active color */}
-        {isActive && (
-          <div
-            className="mt-1 rounded-full"
-            style={{ backgroundColor: paletteColor }}
-          ></div>
-        )}
-      </div>
-    );
-  })}
-</div>
-
+        <div className="mb-4 text-center">
+          <div className="flex flex-wrap gap-4 justify-center">
+            {allAvailableColors.map((paletteColor, index) => {
+              const isActive = selectedMaskColor === paletteColor;
+              return (
+                <div
+                  key={`palette-color-${index}-${paletteColor}`}
+                  className="flex flex-col items-center group"
+                >
+                  <button
+                    className={`w-6 h-6 transition-all duration-300 ease-in-out transform hover:scale-110
+                      ${isActive
+                        ? "rounded-full ring-2 ring-[#bd5b4c]"
+                        : "rounded-md group-hover:rounded-full group-hover:ring-1 group-hover:ring-[#bd5b4c] transition-all duration-300 ease-in-out"
+                      }`}
+                    style={{ backgroundColor: paletteColor }}
+                    title={paletteColor}
+                    onClick={() => handlePaletteColorSelect(paletteColor)}
+                    onMouseEnter={() => {
+                      setPreviewMode(true);
+                      setHoveredPaletteColor(paletteColor);
+                    }}
+                    onMouseLeave={() => {
+                      setPreviewMode(false);
+                      setHoveredPaletteColor(null);
+                    }}
+                  />
+                  {/* Show colored stripe under active color */}
+                  {isActive && (
+                    <div
+                      className="mt-1 rounded-full"
+                      style={{ backgroundColor: paletteColor }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
