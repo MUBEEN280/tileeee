@@ -1,11 +1,14 @@
 import React from 'react';
+import { FaCartShopping } from "react-icons/fa6";
 
 const ShopButton = () => {
   return (
     <button
-      className="bg-white border border-black px-6 py-2 uppercase font-poppins hover:bg-black hover:text-white hover:ring-2 hover:ring-[#bd5b4c] hover:rounded-md hover:shadow-md hover:shadow-[#bd5b4c] transition-all duration-300 ease-in-out"
+      className="bg-white text-black border border-black px-6 py-2 flex justify-center items-center gap-2 hover:bg-black hover:text-white  transition-all duration-300 ease"
     >
-      Shop Now
+
+     <span><FaCartShopping size={18}/></span>
+     <span className='text-sm font-poppins font-light'>Shop Now</span>
     </button>
   );
 };

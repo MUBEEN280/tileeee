@@ -1,5 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTileSimulator } from "../context/TileSimulatorContext";
+import {
+  FaBed,
+  FaUtensils,
+  FaBath,
+  FaStore,
+  FaWarehouse,
+  FaSave,
+} from "react-icons/fa";
+
+import ColorEditor from "./ColorEditor";
+import SaveDesign from "./buttons/SaveDesign";
+
+const environments = [
+  { icon: <FaBed />, label: "bedroom", image: "/Images/bedroomjpg.png" },
+  { icon: <FaUtensils />, label: "dining", image: "/Images/livingjpg.png" },
+  { icon: <FaWarehouse />, label: "kitchen", image: "/Images/kitchen.png" },
+  { icon: <FaBath />, label: "bathroom", image: "/Images/env/bathroom.png" },
+  { icon: <FaStore />, label: "store", image: "/Images/commercial_old.png" },
+];
+
+const groutColors = ["#f5f5f5", "#d3d3d3", "#aaaaaa"];
+const thicknessLevels = ["none", "thin", "thick"];
 
 const TileSelector = ({ onSelectTile }) => {
   const {
@@ -7,69 +29,188 @@ const TileSelector = ({ onSelectTile }) => {
     selectedCategory,
     setSelectedCategory,
     setSelectedBorder,
+    selectedSize,
+    setSelectedSize,
+    selectedEnvironment,
+    setSelectedEnvironment,
+    groutColor,
+    setGroutColor,
+    groutThickness,
+    setGroutThickness,
+    tileMasks,
+    setTileMaskColor,
+    borderMasks,
+    setBorderMaskColor,
+    selectedTile,
+    setSelectedTile: handleTileSelect,
   } = useTileSimulator();
-  // const [activeCollection, setActiveCollection] = useState(Object.keys(tileCollections)[0]);
-  const [selectedTile, setSelectedTile] = useState(null);
-
-  const handleTileSelect = (tile) => {
-    setSelectedTile(tile);
-    if (onSelectTile) {
-      onSelectTile(tile);
-    }
-  };
 
   const handleTileClick = (tile) => {
     if (selectedCategory === "Border Collection") {
       setSelectedBorder(tile.image);
     } else {
       handleTileSelect(tile);
+      if (onSelectTile) {
+        onSelectTile(tile);
+      }
     }
   };
+
   return (
     <section className="w-full h-auto p-1">
-      <h4 className="text-md  mb-2 font-light font-poppins text-center lg:text-left uppercase tracking-wide">
-        (SCROLL FOR MORE OPTIONS)
-      </h4>
-      <div className="flex flex-col md:flex-row gap-2">
-        <div className="flex md:flex-col justify-start items-start custom-scrollbar overflow-x-auto md:overflow-y-auto gap-2 md:min-w-[180px] bg-gray-100 p-2 rounded-lg">
-          {Object.keys(tileCollections).map((collection) => (
-            <button
-              key={collection}
-              onClick={() => {
-                setSelectedCategory(collection);
-              }}
-              className={`px-4 py-2 whitespace-nowrap font-poppins font-light ${
-                selectedCategory === collection
-                  ? "text-sm text-gray-900"
-                  : "text-xs text-gray-700 hover:text-gray-900"
-              } rounded-lg transition-all duration-300 ease-in-out`}
-            >
-              {collection}
-            </button>
-          ))}
+      <h2 className="font-poppins font-semibold tracking-wide text-lg mb-2">
+        Tile Customization
+      </h2>
+      <div className="flex flex-col gap-2">
+        <h2 className="font-poppins">Select Category</h2>
+        <div className="w-full rounded-lg">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full p-2  rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 font-poppins text-sm"
+          >
+            {Object.keys(tileCollections).map((collection) => (
+              <option key={collection} value={collection}>
+                {collection}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="grid grid-cols-4  lg:grid-cols-1 xl:grid-cols-2  gap-2 flex-1 bg-gray-100 p-2 rounded-lg font-light font-poppins overflow-x-auto custom-scrollbar lg:overflow-y-auto">
-          {tileCollections[selectedCategory].map((tile) => (
-            <div
-              key={tile.id}
-              className={`relative aspect-square group cursor-pointer ${
-                selectedTile?.id === tile.id ? "overflow-hidden" : ""
-              }`}
-              onClick={() => {
-                handleTileClick(tile);
-              }}
-            >
-              <img
-                src={tile.image}
-                alt={tile.name}
-                className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
-              <div className="absolute bottom-0 left-0 right-0 py-1 bg-black bg-opacity-50 text-white text-[10px]  rounded-b-lg text-center hidden group-hover:block transition-all duration-300 ease-in-out">
-                {tile.name}
+
+        <div className="mt-2">
+          <h3 className="font-poppins">Select Tile Pattern</h3>
+          <div className="grid grid-cols-4 gap-2 flex-1  overflow-x-auto custom-scrollbar mt-2">
+            {tileCollections[selectedCategory]?.map((tile) => (
+              <div
+                key={tile.id}
+                className="relative aspect-square group cursor-pointer bg-gray-200 p-2 rounded-sm"
+                onClick={() => handleTileClick(tile)}
+              >
+                <img
+                  src={tile.image}
+                  alt={tile.name}
+                  className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105"
+                />
+                <div className="mt-1 text-center text-xs font-medium text-gray-700">
+                  {tile.name}
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tile Size Selection */}
+        <div className="mt-2">
+          <h4 className="font-poppins mb-2">Select Tile Size</h4>
+          <div className="flex gap-2">
+            {["8x8", "12x12"].map((size) => {
+              const isSelected = selectedSize === size;
+
+              return (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={` py-1 px-10 rounded-md font-poppins font-light text-sm transition-all duration-300 ease-in-out
+            ${
+              isSelected
+                ? "bg-black text-white"
+                : "bg-white border border-gray-200 shadow-sm hover:bg-black hover:text-white"
+            }`}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Choose Environment Section */}
+        <div className="mt-2">
+          <h4 className="font-poppins">Choose Environment</h4>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {environments.map((env) => (
+              <button
+                key={env.label}
+                onClick={() => setSelectedEnvironment(env.label)}
+                className={`flex text-2xl items-center gap-2 p-4 rounded-md border 
+          ${
+            selectedEnvironment === env.label
+              ? "bg-black text-white"
+              : "bg-white border-gray-300"
+          } 
+          hover:bg-black hover:text-white transition-all`}
+              >
+                {env.icon}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Grout Controls */}
+        <div className="mt-2">
+          <h3 className="font-poppins">Grout Options</h3>
+          <div className="mt-1">
+            <h4 className="font-poppins text-gray-600">Colors</h4>
+            <div className="flex gap-4 mt-1">
+              {groutColors.map((color, index) => (
+                <div
+                  key={index}
+                  className={`w-6 h-6 rounded-full border cursor-pointer hover:ring-1 hover:ring-[#bd5b4c] transition-all duration-300 ease-in-out ${
+                    groutColor === color ? "ring-2 ring-[#bd5b4c]" : ""
+                  }`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => setGroutColor(color)}
+                />
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div className="mt-2">
+            <h3 className="font-poppins text-gray-600">Thickness</h3>
+            <div className="flex flex-wrap gap-4 mt-2">
+              {thicknessLevels.map((level) => (
+                <label
+                  key={level}
+                  className={`flex items-center gap-2 cursor-pointer uppercase text-xs tracking-wide font-poppins transition-all duration-300 ease-in-out
+                    ${
+                      groutThickness === level
+                        ? "bg-black text-white rounded-md shadow-md px-2 py-1"
+                        : "text-black"
+                    }
+                  `}
+                >
+                  <input
+                    type="radio"
+                    name="groutThickness"
+                    value={level}
+                    checked={groutThickness === level}
+                    onChange={() => setGroutThickness(level)}
+                  />
+                  {level}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Color Editor Section */}
+        <div className="mt-2">
+          <h3 className="font-poppins">Choose Color</h3>
+          {selectedTile && (
+            <div className="mt-1">
+              <ColorEditor
+                tile={selectedTile}
+                tileMasks={tileMasks}
+                setTileMaskColor={setTileMaskColor}
+                borderMasks={borderMasks}
+                setBorderMaskColor={setBorderMaskColor}
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <SaveDesign />
         </div>
       </div>
     </section>

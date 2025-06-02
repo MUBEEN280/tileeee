@@ -734,7 +734,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     style={{
                       position: "relative",
                       overflow: "hidden",
-                      height: "auto",
+                      height: "500px",
                       minHeight: "200px",
                     }}
                   >
@@ -742,7 +742,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                     <img
                       src={tileConfig.environment.image}
                       alt="Room preview"
-                      className="w-full h-full object-cover absolute inset-0"
+                      className="w-full h-full object-contain absolute inset-0"
                       style={{
                         zIndex: 3,
                       }}
