@@ -16,6 +16,23 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
   const previewRef = useRef(null);
   const canvasRef = useRef(null);
   const [loadedImages, setLoadedImages] = useState(new Map());
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Size conversion logic
   const sizeToPx = {
@@ -526,7 +543,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-8 rounded-xl w-full max-w-4xl overflow-y-auto max-h-[80vh] lg:max-h-max">
+      <div className="bg-white p-8 rounded-xl w-full max-w-5xl overflow-y-auto h-full max-h-[80vh] custom-scrollbar">
         {!isFormOpen ? (
           <div>
             <div className="flex justify-end">
@@ -538,7 +555,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
               </button>
             </div>
             <div className="flex gap-6 flex-wrap">
-              <div className="max-w-[20%] h-20">
+              <div className="max-w-[30%] h-20">
                 <img
                   src="/Images/logo.png"
                   alt=""
@@ -614,27 +631,29 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                 <p>Environment: {tileConfig.environment.label}</p>
               )}
             </div>
+
             <div
               ref={previewRef}
-              className="grid grid-cols-1 sm:grid-cols-2 space-y-6"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-10 mb-8"
             >
               {/* Tile Pattern Without Environment */}
-              <div className="rounded-lg pt-4">
-                <h3 className="mb-4 font-light font-poppins">Tile Pattern</h3>
+              <div className="rounded-lg">
+                <h3 className="mb-1  font-poppins">Tile Pattern</h3>
                 <div
                   className="w-full rounded-lg overflow-hidden relative"
                   style={{
                     position: "relative",
                     overflow: "hidden",
-                    height: "auto",
-                    minHeight: "200px",
+                    height: "100%",
+                    width: "100%",
+                    maxHeight: "300px",
                   }}
                 >
                   {/* Original Tile Image */}
-                  <div className="relative w-full max-h-[500px]">
+                  <div className="relative w-full h-full">
                     <canvas
                       ref={canvasRef}
-                      className="w-full h-full object-contain bg-gray-100"
+                      className="w-full h-full object-cover bg-gray-100"
                     />
 
                     {/* Mask Layers */}
@@ -725,33 +744,33 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
               {/* Tile Pattern With Environment */}
               {tileConfig?.environment && (
-                <div className="rounded-lg p-4">
-                  <h3 className="mb-4 font-light font-poppins">
-                    Tile in Environment
+                <div className="rounded-lg">
+                  <h3 className="mb-1  font-poppins">
+                    Tile Environment
                   </h3>
                   <div
                     className="w-full rounded-lg overflow-hidden relative"
                     style={{
                       position: "relative",
                       overflow: "hidden",
-                      height: "500px",
-                      minHeight: "200px",
+                      height: "100%",
+                      maxHeight: "300px",
                     }}
                   >
                     {/* Environment background */}
                     <img
                       src={tileConfig.environment.image}
                       alt="Room preview"
-                      className="w-full h-full object-contain absolute inset-0"
+                      className="w-full h-full  object-cover absolute inset-0"
                       style={{
                         zIndex: 3,
                       }}
                     />
                     {/* Original Tile Image */}
-                    <div className="relative w-full max-h-[500px]">
+                    <div className="relative w-full max-h-[300px]">
                       <canvas
                         ref={canvasRef}
-                        className="w-full h-full object-contain bg-gray-100"
+                        className="w-full h-full object-cover bg-gray-100"
                       />
 
                       {/* Mask Layers */}
@@ -845,7 +864,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
             </div>
 
             <button
-              className="mt-6 bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 text-base  w-full  font-poppins"
+              className="mt-6 bg-red-600 text-white px-4 py-3 rounded-md hover:bg-red-700 text-base  w-full  font-poppins"
               onClick={() => setIsFormOpen(true)}
             >
               Send Yourself a Copy!
@@ -936,7 +955,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
               </div>
 
               {/* Tile Information */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-light text-gray-700 mb-2">
                     Tile Quantity
@@ -1001,20 +1020,20 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
               </div>
 
               {/* Form Actions */}
-              <div className="flex gap-4 mt-8">
+              <div className="flex gap-4 mt-4 flex-wrap">
                 <button
                   type="button"
                   onClick={() => {
                     setIsFormOpen(false);
                     onClose();
                   }}
-                  className="flex-1 bg-gray-600 text-white px-6 py-3 rounded-md hover:bg-gray-700 text-base"
+                  className="flex-1 bg-gray-600 text-white px-4 py-3 rounded-md hover:bg-gray-700 text-base"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 text-base"
+                  className="flex-1 bg-red-600 text-white px-4 py-3 rounded-md hover:bg-red-700 text-base"
                 >
                   Submit
                 </button>

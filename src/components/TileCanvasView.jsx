@@ -44,8 +44,8 @@ const TileCanvasView = () => {
   const gridSize = selectedSize === "8x8" ? 8 : 12;
   const totalTiles = gridSize * gridSize;
 
-  const containerWidth = 1200;
-  const containerHeight = selectedEnvironment ? "auto" : "800px";
+  const containerWidth = "100vw";
+  const containerHeight = "100%";
 
   const getTileSizeInPx = (size) => {
     const baseSize = size === "8x8" ? 8 : 12;
@@ -69,7 +69,7 @@ const TileCanvasView = () => {
 
   if (!selectedTile) {
     return (
-      <div className="max-w-full mx-auto p-4">
+      <div className="w-full mx-auto p-4">
         <h2 className="font-poppins font-semibold tracking-wide text-lg mb-2">
           TILE Preview
         </h2>
@@ -81,13 +81,13 @@ const TileCanvasView = () => {
   }
 
   return (
-    <div className="max-w-full mx-auto lg:mx-0 p-1">
+    <div className="w-full mx-auto lg:mx-0 p-1">
       <h2 className="font-poppins font-semibold tracking-wide text-lg mb-2">
         TILE Preview
       </h2>
       <div className="relative mb-6">
         <div
-          className="w-full rounded shadow"
+          className="w-full  rounded shadow"
           style={{
             position: "relative",
             overflow: "hidden",
@@ -241,7 +241,7 @@ const TileCanvasView = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center items-center gap-20 mt-5">
+      <div className="flex justify-center items-center gap-2 sm:gap-20 mt-5 flex-wrap">
         <SaveButton onSave={handleSave} />
         <ShopButton />
       </div>

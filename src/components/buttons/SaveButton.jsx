@@ -4,7 +4,7 @@ import { FaDownload } from "react-icons/fa6";
 const SaveButton = ({ onSave }) => {
   return (
     <button
-      className="bg-black text-white px-6 py-2 flex justify-center items-center gap-2 hover:bg-white hover:text-black hover:border hover:border-black transition-all duration-300 ease"
+      className="bg-black text-white px-4 py-2 flex justify-center items-center gap-2 hover:bg-white hover:text-black hover:border hover:border-black transition-all duration-300 ease"
       onClick={onSave}
     >
       <span><FaDownload size={18}/></span>
