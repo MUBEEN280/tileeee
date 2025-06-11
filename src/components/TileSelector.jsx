@@ -6,11 +6,9 @@ import {
   FaBath,
   FaStore,
   FaWarehouse,
-  FaSave,
 } from "react-icons/fa";
 
 import ColorEditor from "./ColorEditor";
-import SaveDesign from "./buttons/SaveDesign";
 
 const environments = [
   { icon: <FaBed />, label: "bedroom", image: "/Images/bedroomjpg.png" },
@@ -207,10 +205,6 @@ const TileSelector = ({ onSelectTile }) => {
               />
             </div>
           )}
-        </div>
-
-        <div>
-          <SaveDesign />
         </div>
       </div>
     </section>

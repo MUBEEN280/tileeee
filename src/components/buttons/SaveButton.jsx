@@ -8,7 +8,7 @@ const SaveButton = ({ onSave }) => {
       onClick={onSave}
     >
       <span><FaDownload size={18}/></span>
-      <span className="text-sm font-poppins font-light">Download Print</span>
+      <span className="text-sm font-poppins font-light">Download & Save</span>
     </button>
   );
 };

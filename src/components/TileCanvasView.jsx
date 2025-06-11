@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
 import SaveButton from "./buttons/SaveButton";
 import ShopButton from "./buttons/ShopButton";
@@ -11,7 +11,7 @@ const environments = [
   { icon: null, label: "kitchen", image: "/Images/kitchen.png" },
   { icon: null, label: "bathroom", image: "/Images/env/bathroom.png" },
   { icon: null, label: "store", image: "/Images/commercial_old.png" },
-];
+]; 
 
 const thicknessToPx = {
   none: "0px",
@@ -33,6 +33,7 @@ const TileCanvasView = () => {
     selectedBorder,
     blockRotations,
     rotateBlock,
+    setSelectedTile,
   } = useTileSimulator();
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -66,6 +67,15 @@ const TileCanvasView = () => {
   const handleSave = () => {
     setIsModalOpen(true);
   };
+
+  useEffect(() => {
+    if (selectedColor) {
+      setSelectedTile(prev => ({
+        ...prev,
+        colorsUsed: [selectedColor, ...(prev?.colorsUsed || []).slice(1)]
+      }));
+    }
+  }, [selectedColor]);
 
   if (!selectedTile) {
     return (
@@ -125,11 +135,12 @@ const TileCanvasView = () => {
                   return (
                     <div
                       key={index}
-                      className="relative bg-white cursor-pointer"
+                      className="relative cursor-pointer"
                       style={{
                         width: "100%",
                         aspectRatio: "1 / 1",
                         overflow: "hidden",
+                        backgroundColor: selectedColor || selectedTile?.colorsUsed?.[0] || "#ffffff",
                       }}
                       onClick={() => rotateBlock(blockIndex % 4)}
                     >
@@ -141,6 +152,7 @@ const TileCanvasView = () => {
                             blockRotations[blockIndex % 4] || 0
                           }deg)`,
                           transition: "transform 0.3s ease-in-out",
+                          backgroundColor: selectedColor || selectedTile?.colorsUsed?.[0] || "#ffffff",
                         }}
                       >
                         {selectedTile?.image && (
@@ -153,6 +165,7 @@ const TileCanvasView = () => {
                               transformOrigin: `${
                                 index % 2 === 0 ? "0" : "100%"
                               } ${index < gridSize ? "0" : "100%"}`,
+                              backgroundColor: selectedColor || selectedTile?.colorsUsed?.[0] || "#ffffff",
                             }}
                           />
                         )}
@@ -251,7 +264,10 @@ const TileCanvasView = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         tileConfig={{
-          tile: selectedTile,
+          tile: {
+            ...selectedTile,
+            masks: tileMasks
+          },
           color: selectedColor,
           size: selectedSize,
           groutColor: groutColor,
@@ -262,6 +278,7 @@ const TileCanvasView = () => {
                 image: currentEnv.image,
               }
             : null,
+          rotations: blockRotations,
         }}
       />
     </div>
