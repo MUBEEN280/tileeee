@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from 'axios';
 
 const TileSimulatorContext = createContext();
+
+const API_URL = 'https://live-backend-3.onrender.com';
 
 // Sample tiles with mask data
 const tileCollections = {
@@ -839,240 +842,128 @@ const tileCollections = {
 };
 
 export const TileSimulatorProvider = ({ children }) => {
-  const [selectedTile, setSelectedTile] = useState(() => {
-    const savedTile = localStorage.getItem("selectedTile");
-    return savedTile ? JSON.parse(savedTile) : null;
-  });
-
-  const [selectedColor, setSelectedColor] = useState(() => {
-    const savedColor = localStorage.getItem("selectedColor");
-    return savedColor || null;
-  });
-
+  const [tileCollections, setTileCollections] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState("Pattern Collection");
+  const [selectedBorder, setSelectedBorder] = useState(null);
   const [selectedSize, setSelectedSize] = useState(() => {
     const savedSize = localStorage.getItem("selectedSize");
     return savedSize || "8x8";
   });
-
-  const [selectedBorder, setSelectedBorder] = useState(null);
-
-  // New state for mask functionality
-  const [selectedEnvironment, setSelectedEnvironment] = useState(() => {
-    const savedEnv = localStorage.getItem("selectedEnvironment");
-    return savedEnv || "bedroom";
+  const [selectedEnvironment, setSelectedEnvironment] = useState("bedroom");
+  const [groutColor, setGroutColor] = useState("#f5f5f5");
+  const [groutThickness, setGroutThickness] = useState("none");
+  const [selectedTile, setSelectedTile] = useState(() => {
+    const savedTile = localStorage.getItem("selectedTile");
+    return savedTile ? JSON.parse(savedTile) : null;
   });
-
-  const [groutColor, setGroutColor] = useState(() => {
-    const savedGroutColor = localStorage.getItem("groutColor");
-    return savedGroutColor || "#ffffff";
+  const [selectedColor, setSelectedColor] = useState(() => {
+    const savedColor = localStorage.getItem("selectedColor");
+    return savedColor || null;
   });
+  const [tileMasks, setTileMasks] = useState([]);
+  const [borderMasks, setBorderMasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [groutThickness, setGroutThickness] = useState(() => {
-    const savedThickness = localStorage.getItem("groutThickness");
-    return savedThickness || 2;
-  });
+  useEffect(() => {
+    const fetchTiles = async () => {
+      try {
+        console.log('Fetching tiles from:', `${API_URL}/api/tiles`);
+        const response = await axios.get(`${API_URL}/api/tiles`);
+        console.log('API Response:', response.data);
 
-  const [tileMasks, setTileMasks] = useState(() => {
-    const savedMasks = localStorage.getItem("tileMasks");
-    return savedMasks ? JSON.parse(savedMasks) : [];
-  });
+        if (!response.data || !Array.isArray(response.data)) {
+          throw new Error('Invalid API response format');
+        }
 
-  const [selectedCategory, setSelectedCategory] =
-    useState("Pattern Collection");
+        const transformedTiles = {
+          "Pattern Collection": response.data.map(tile => {
+            console.log('Processing tile:', tile);
+            return {
+              id: tile._id,
+              name: tile.tileName || tile.name,
+              image: tile.mainMask || tile.image,
+              shape: tile.shape || "square",
+              grout: tile.grout || "cross",
+              scale: tile.scale || 1,
+              colorsUsed: tile.colorsUsed || ["#ffffff"],
+              masks: (tile.masks || []).map(mask => ({
+                ...mask,
+                image: mask.image || mask.maskImage
+              }))
+            };
+          })
+        };
 
-  const [borderMasks, setBorderMasks] = useState(() => {
-    const savedMasks = localStorage.getItem("borderMasks");
-    return savedMasks ? JSON.parse(savedMasks) : [];
-  });
+        console.log('Transformed tiles:', transformedTiles);
+        setTileCollections(transformedTiles);
+      } catch (error) {
+        console.error('Error fetching tiles:', error);
+        console.error('Error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+        setError(error.response?.data?.error || error.message || "Failed to fetch tiles");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const [blockRotations, setBlockRotations] = useState([0, 0, 0, 0]);
+    fetchTiles();
+  }, []);
 
   const handleTileSelect = (tile) => {
-    console.log("Selecting tile:", tile);
-    // Clear any existing selections
-    setSelectedColor(null);
-    // Set the new tile
     setSelectedTile(tile);
-    // Set initial masks with original colors
-    if (tile.masks) {
-      const initialMasks = tile.masks.map((mask) => ({
-        ...mask,
-        color: mask.color, // Use the original color from the tile data
-      }));
-      setTileMasks(initialMasks);
-      // Save to localStorage
-      localStorage.setItem("tileMasks", JSON.stringify(initialMasks));
-    }
+    localStorage.setItem("selectedTile", JSON.stringify(tile));
   };
 
-  // Update masks when tile changes
-  useEffect(() => {
-    if (selectedTile?.masks) {
-      console.log("Updating masks for tile:", selectedTile);
-      // Check if this is a new tile selection or a page refresh
-      const isNewSelection =
-        !localStorage.getItem("selectedTile") ||
-        JSON.parse(localStorage.getItem("selectedTile"))?.id !==
-          selectedTile.id;
-
-      if (isNewSelection) {
-        // For new tile selection, use original mask colors
-        const initialMasks = selectedTile.masks.map((mask) => ({
-          ...mask,
-          color: mask.color, // Use the original color from the tile data
-        }));
-        setTileMasks(initialMasks);
-        localStorage.setItem("tileMasks", JSON.stringify(initialMasks));
-      } else {
-        // For page refresh, use the saved masks
-        const savedMasks = localStorage.getItem("tileMasks");
-        if (savedMasks) {
-          setTileMasks(JSON.parse(savedMasks));
-        }
-      }
-      setSelectedColor(null);
-    }
-  }, [selectedTile]);
-
   const setTileMaskColor = (maskId, color) => {
-    console.log("Setting mask color:", { maskId, color });
-    setTileMasks((prevMasks) => {
-      const updatedMasks = prevMasks.map((mask) =>
+    setTileMasks(prevMasks =>
+      prevMasks.map(mask =>
         mask.id === maskId ? { ...mask, color } : mask
-      );
-      // Save to localStorage
-      localStorage.setItem("tileMasks", JSON.stringify(updatedMasks));
-      return updatedMasks;
-    });
+      )
+    );
   };
 
   const handleBorderSelect = (border) => {
     setSelectedBorder(border);
-    // Find the border tile in the Border Collection
-    const borderTile = tileCollections["Border Collection"].find(
-      (tile) => tile.image === border
-    );
-    if (borderTile && borderTile.masks) {
-      // Initialize border masks with original colors
-      const initialMasks = borderTile.masks.map((mask) => ({
-        ...mask,
-        color: mask.color, // Use the original color from the border data
-      }));
-      setBorderMasks(initialMasks);
-      localStorage.setItem("borderMasks", JSON.stringify(initialMasks));
-    }
   };
 
   const setBorderMaskColor = (maskId, color) => {
-    setBorderMasks((prevMasks) => {
-      const updatedMasks = prevMasks.map((mask) =>
-        mask.maskId === maskId ? { ...mask, color } : mask
-      );
-      localStorage.setItem("borderMasks", JSON.stringify(updatedMasks));
-      return updatedMasks;
-    });
+    setBorderMasks(prevMasks =>
+      prevMasks.map(mask =>
+        mask.id === maskId ? { ...mask, color } : mask
+      )
+    );
   };
 
-  // Update border masks when border changes
-  useEffect(() => {
-    if (selectedBorder) {
-      const borderTile = tileCollections["Border Collection"].find(
-        (tile) => tile.image === selectedBorder
-      );
-      if (borderTile?.masks) {
-        const savedMasks = localStorage.getItem("borderMasks");
-        if (savedMasks) {
-          setBorderMasks(JSON.parse(savedMasks));
-        } else {
-          const initialMasks = borderTile.masks.map((mask) => ({
-            ...mask,
-            color: mask.color,
-          }));
-          setBorderMasks(initialMasks);
-          localStorage.setItem("borderMasks", JSON.stringify(initialMasks));
-        }
-      }
-    } else {
-      setBorderMasks([]);
-      localStorage.removeItem("borderMasks");
-    }
-  }, [selectedBorder]);
-
-  // Save to localStorage whenever state changes
-  useEffect(() => {
-    if (selectedTile) {
-      localStorage.setItem("selectedTile", JSON.stringify(selectedTile));
-    }
-  }, [selectedTile]);
-
-  useEffect(() => {
-    if (selectedBorder) {
-      localStorage.setItem("selectedBorder", JSON.stringify(selectedBorder));
-    } else {
-      localStorage.removeItem("selectedBorder");
-    }
-  }, [selectedBorder]);
-
-  useEffect(() => {
-    if (selectedColor) {
-      localStorage.setItem("selectedColor", selectedColor);
-    }
-  }, [selectedColor]);
-
-  useEffect(() => {
-    localStorage.setItem("selectedSize", selectedSize);
-  }, [selectedSize]);
-
-  useEffect(() => {
-    localStorage.setItem("selectedEnvironment", selectedEnvironment);
-  }, [selectedEnvironment]);
-
-  useEffect(() => {
-    localStorage.setItem("groutColor", groutColor);
-  }, [groutColor]);
-
-  useEffect(() => {
-    localStorage.setItem("groutThickness", groutThickness);
-  }, [groutThickness]);
-
-  const rotateBlock = (blockIndex) => {
-    const newRotations = [...blockRotations];
-    newRotations[blockIndex] = (newRotations[blockIndex] + 90) % 360;
-    setBlockRotations(newRotations);
+  const value = {
+    tileCollections,
+    selectedCategory,
+    setSelectedCategory,
+    selectedBorder,
+    setSelectedBorder,
+    selectedSize,
+    setSelectedSize,
+    selectedEnvironment,
+    setSelectedEnvironment,
+    groutColor,
+    setGroutColor,
+    groutThickness,
+    setGroutThickness,
+    selectedTile,
+    setSelectedTile: handleTileSelect,
+    tileMasks,
+    setTileMaskColor,
+    borderMasks,
+    setBorderMaskColor,
+    loading,
+    error
   };
 
   return (
-    <TileSimulatorContext.Provider
-      value={{
-        // Existing values
-        selectedTile,
-        setSelectedTile: handleTileSelect,
-        selectedColor,
-        setSelectedColor,
-        selectedSize,
-        setSelectedSize,
-        // New values for mask functionality
-        selectedEnvironment,
-        setSelectedEnvironment,
-        groutColor,
-        setGroutColor,
-        groutThickness,
-        setGroutThickness,
-        tileMasks,
-        setTileMaskColor,
-        selectedBorder,
-        setSelectedBorder,
-        handleBorderSelect,
-        borderMasks,
-        setBorderMaskColor,
-        availableTiles: Object.values(tileCollections).flat(),
-        tileCollections,
-        selectedCategory,
-        setSelectedCategory,
-        blockRotations,
-        rotateBlock,
-      }}
-    >
+    <TileSimulatorContext.Provider value={value}>
       {children}
     </TileSimulatorContext.Provider>
   );
@@ -1081,9 +972,7 @@ export const TileSimulatorProvider = ({ children }) => {
 export const useTileSimulator = () => {
   const context = useContext(TileSimulatorContext);
   if (!context) {
-    throw new Error(
-      "useTileSimulator must be used within a TileSimulatorProvider"
-    );
+    throw new Error("useTileSimulator must be used within a TileSimulatorProvider");
   }
   return context;
 };

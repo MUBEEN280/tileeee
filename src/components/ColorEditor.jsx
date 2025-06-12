@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTileSimulator } from "../context/TileSimulatorContext";
+import axios from "axios";
+
+const API_URL = "https://live-backend-3.onrender.com";
 
 const ColorEditor = ({ tile }) => {
   const {
@@ -11,26 +14,71 @@ const ColorEditor = ({ tile }) => {
 
   const [hoveredPaletteColor, setHoveredPaletteColor] = useState(null);
   const [previewMode, setPreviewMode] = useState(false);
-  const [selectedMaskId, setSelectedMaskId] = useState(
-    tileMasks && tileMasks.length > 0 ? tileMasks[0].id : null
-  );
-  const [selectedBorderMaskId, setSelectedBorderMaskId] = useState(
-    borderMasks && borderMasks.length > 0 ? borderMasks[0].maskId : null
-  );
+  const [selectedMaskId, setSelectedMaskId] = useState(null);
+  const [selectedBorderMaskId, setSelectedBorderMaskId] = useState(null);
   const [visibleRows, setVisibleRows] = useState(1);
+  const [apiColors, setApiColors] = useState([]);
+  const [colorLoading, setColorLoading] = useState(false);
+  const [colorError, setColorError] = useState(null);
+
+  // Fetch colors from API
+  useEffect(() => {
+    const fetchColors = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/colors`);
+        setApiColors(response.data);
+      } catch (error) {
+        console.error("Failed to fetch colors:", error);
+        setColorError("Failed to fetch colors");
+      }
+    };
+    fetchColors();
+  }, []);
+
+  // Add new color to API
+  const addTileColor = async (hexCode) => {
+    setColorLoading(true);
+    setColorError(null);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/colors/add`,
+        { hexCode }
+      );
+      setApiColors((prev) => [...prev, response.data]);
+      return response.data;
+    } catch (error) {
+      const errMsg = error.response?.data?.error || "Failed to add color";
+      setColorError(errMsg);
+      throw new Error(errMsg);
+    } finally {
+      setColorLoading(false);
+    }
+  };
+
+  // Initialize selected mask when tile changes
+  useEffect(() => {
+    if (tileMasks && tileMasks.length > 0) {
+      setSelectedMaskId(tileMasks[0].id);
+      setSelectedBorderMaskId(null);
+    }
+  }, [tileMasks]);
 
   if (!tile || !Array.isArray(tileMasks)) return null;
+
+  // Get all available colors from the selected tile's masks
   const allAvailableColors = Array.from(
-    new Set([
-      ...tileMasks.flatMap((mask) => mask.availableColors || []),
-      ...(borderMasks || []).flatMap((mask) => mask.availableColors || []),
-    ])
+    new Set(
+      tileMasks.flatMap((mask) => mask.availableColors || [])
+    )
   );
+
+  // Combine API colors with available colors
+  const combinedColors = [...new Set([...apiColors.map(c => c.hexCode), ...allAvailableColors])];
 
   // Split colors into rows of 5
   const colorRows = [];
-  for (let i = 0; i < allAvailableColors.length; i += 5) {
-    colorRows.push(allAvailableColors.slice(i, i + 5));
+  for (let i = 0; i < combinedColors.length; i += 5) {
+    colorRows.push(combinedColors.slice(i, i + 5));
   }
 
   // The currently selected mask objects
@@ -40,30 +88,31 @@ const ColorEditor = ({ tile }) => {
   );
 
   // When a palette color is clicked, update only the selected mask
-  const handlePaletteColorSelect = (paletteColor) => {
-    if (selectedBorderMask && selectedBorderMaskId) {
-      setBorderMaskColor(selectedBorderMaskId, paletteColor);
-    } else if (selectedMask) {
-      setTileMaskColor(selectedMask.id, paletteColor);
+  const handlePaletteColorSelect = async (paletteColor) => {
+    try {
+      // If color doesn't exist in API, add it
+      if (!apiColors.some(c => c.hexCode === paletteColor)) {
+        await addTileColor(paletteColor);
+      }
+
+      if (selectedBorderMask && selectedBorderMaskId) {
+        setBorderMaskColor(selectedBorderMaskId, paletteColor);
+      } else if (selectedMask) {
+        setTileMaskColor(selectedMask.id, paletteColor);
+      }
+      setPreviewMode(false);
+      setHoveredPaletteColor(null);
+    } catch (error) {
+      console.error("Failed to apply color:", error);
     }
-    setPreviewMode(false);
-    setHoveredPaletteColor(null);
   };
 
-  // When a color in "Colors Used" is clicked, select the first mask with that color
-  const handleColorUsedClick = (color) => {
-    const tileMaskWithColor = tileMasks.find((mask) => mask.color === color);
-    if (tileMaskWithColor) {
-      setSelectedMaskId(tileMaskWithColor.id);
+  // When a color is clicked, select the first mask with that color
+  const handleColorClick = (color) => {
+    const maskWithColor = tileMasks.find((mask) => mask.color === color);
+    if (maskWithColor) {
+      setSelectedMaskId(maskWithColor.id);
       setSelectedBorderMaskId(null);
-      return;
-    }
-    const borderMaskWithColor = borderMasks?.find(
-      (mask) => mask.color === color
-    );
-    if (borderMaskWithColor) {
-      setSelectedBorderMaskId(borderMaskWithColor.maskId);
-      setSelectedMaskId(null);
     }
   };
 
@@ -77,7 +126,6 @@ const ColorEditor = ({ tile }) => {
   const getUniqueColors = () => {
     const colorSet = new Set();
     tileMasks.forEach((mask) => colorSet.add(mask.color));
-    borderMasks?.forEach((mask) => colorSet.add(mask.color));
     return Array.from(colorSet);
   };
 
@@ -93,16 +141,17 @@ const ColorEditor = ({ tile }) => {
           Customize Colors
         </div>
         <ol className="text-xs text-gray-500 mt-1 space-y-1">
-          <li>Click on a color from "Color Used" to select an area</li>
-          <li>Choose a new color from "Availabe Colors" to apply it</li>
+          <li>Click on a color to select an area</li>
+          <li>Choose a new color from "Available Colors" to apply it</li>
         </ol>
       </div>
-         {/* Colors Used */}
+
+      {/* Colors Used */}
       <div className="mb-6">
         <div className="text-sm mb-2 tracking-wider font-light font-poppins">
-          Color Used
+          Colors Used
         </div>
-        <div className="flex flex-wrap gap-3 ">
+        <div className="flex flex-wrap gap-3">
           {getUniqueColors().map((color) => (
             <button
               key={color}
@@ -113,7 +162,7 @@ const ColorEditor = ({ tile }) => {
                 }`}
               style={{ backgroundColor: color }}
               title={color}
-              onClick={() => handleColorUsedClick(color)}
+              onClick={() => handleColorClick(color)}
             />
           ))}
         </div>
@@ -124,6 +173,9 @@ const ColorEditor = ({ tile }) => {
         <div className="text-sm mb-3 tracking-wider font-light font-poppins">
           Available Colors
         </div>
+        {colorError && (
+          <div className="text-red-500 text-sm mb-2">{colorError}</div>
+        )}
         <div className="flex flex-col gap-2">
           {colorRows.slice(0, visibleRows).map((row, rowIndex) => (
             <div key={rowIndex} className="flex gap-2">
@@ -148,6 +200,7 @@ const ColorEditor = ({ tile }) => {
                       setPreviewMode(false);
                       setHoveredPaletteColor(null);
                     }}
+                    disabled={colorLoading}
                   />
                 );
               })}
@@ -158,7 +211,7 @@ const ColorEditor = ({ tile }) => {
           <div className="mt-1">
             <button
               onClick={handleShowMore}
-              className="p-1  font-poppins text-sm text-gray-600 hover:text-black transition-colors duration-300 ease"
+              className="p-1 font-poppins text-sm text-gray-600 hover:text-black transition-colors duration-300 ease"
             >
               More
             </button>

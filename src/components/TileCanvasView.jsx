@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import SaveButton from "./buttons/SaveButton";
 import ShopButton from "./buttons/ShopButton";
@@ -31,11 +31,10 @@ const TileCanvasView = () => {
     tileMasks,
     borderMasks,
     selectedBorder,
-    blockRotations,
     rotateBlock,
-    setSelectedTile,
   } = useTileSimulator();
 
+  const [blockRotations, setBlockRotations] = useState([0, 0, 0, 0]);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   const currentEnv = environments.find(
@@ -66,6 +65,15 @@ const TileCanvasView = () => {
 
   const handleSave = () => {
     setIsModalOpen(true);
+  };
+
+  const handleRotateBlock = (blockIndex) => {
+    const newRotations = [...blockRotations];
+    newRotations[blockIndex] = (newRotations[blockIndex] + 90) % 360;
+    setBlockRotations(newRotations);
+    if (rotateBlock) {
+      rotateBlock(blockIndex);
+    }
   };
 
   useEffect(() => {
@@ -140,9 +148,9 @@ const TileCanvasView = () => {
                         width: "100%",
                         aspectRatio: "1 / 1",
                         overflow: "hidden",
-                        backgroundColor: selectedColor || selectedTile?.colorsUsed?.[0] || "#ffffff",
+                        backgroundColor: selectedColor || (selectedTile?.colorsUsed?.[0] || "#ffffff"),
                       }}
-                      onClick={() => rotateBlock(blockIndex % 4)}
+                      onClick={() => handleRotateBlock(blockIndex % 4)}
                     >
                       {/* Base Tile */}
                       <div
@@ -152,7 +160,7 @@ const TileCanvasView = () => {
                             blockRotations[blockIndex % 4] || 0
                           }deg)`,
                           transition: "transform 0.3s ease-in-out",
-                          backgroundColor: selectedColor || selectedTile?.colorsUsed?.[0] || "#ffffff",
+                          backgroundColor: selectedColor || (selectedTile?.colorsUsed?.[0] || "#ffffff"),
                         }}
                       >
                         {selectedTile?.image && (
@@ -165,7 +173,11 @@ const TileCanvasView = () => {
                               transformOrigin: `${
                                 index % 2 === 0 ? "0" : "100%"
                               } ${index < gridSize ? "0" : "100%"}`,
-                              backgroundColor: selectedColor || selectedTile?.colorsUsed?.[0] || "#ffffff",
+                              backgroundColor: selectedColor || (selectedTile?.colorsUsed?.[0] || "#ffffff"),
+                            }}
+                            onError={(e) => {
+                              console.error('Error loading image:', selectedTile.image);
+                              e.target.style.display = 'none';
                             }}
                           />
                         )}
