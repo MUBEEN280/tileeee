@@ -1,38 +1,37 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const cors = require('cors');
-const tileSubmissionsRoutes = require('./routes/tileSubmissionRoutes');
-dotenv.config(); // load .env file
+const path = require('path');
+const tileSubmissionRoutes = require('./routes/tileSubmissionRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const MONGO_URL = process.env.MONGO_URL;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Connect to MongoDB
-mongoose.connect(MONGO_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('Connected to MongoDB');
-})
-.catch((err) => {
-  console.error('MongoDB connection error:', err);
-});
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/tilesubmissions', tileSubmissionsRoutes);
+app.use('/api/tile-submissions', tileSubmissionRoutes);
 
-// Basic route
-app.get('/', (req, res) => {
-  res.send('Server & MongoDB connected!');
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URL)
+  .then(() => {
+    console.log('Connected to MongoDB');
+    // Start server
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  });

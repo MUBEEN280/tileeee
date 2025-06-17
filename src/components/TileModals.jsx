@@ -7,6 +7,7 @@ import html2canvas from "html2canvas";
 
 export default function TileModals({ isOpen, onClose, tileConfig }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
   const {
     register,
     handleSubmit,
@@ -94,11 +95,55 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
   const onSubmit = async (data) => {
     try {
-      // Generate PDF first
-      console.log('Generating PDF...');
+      console.log("Generating PDF...");
       const pdf = await generatePDF(data);
       const pdfBlob = pdf.output("blob");
       console.log('PDF generated successfully');
+
+      // Get the currently selected tile image
+      let selectedTileImage = null;
+      if (tileConfig?.tile?.image) {
+        try {
+          // Get the current tile image URL
+          const currentTileImageUrl = tileConfig.tile.image;
+          console.log("Capturing selected tile image:", currentTileImageUrl);
+          
+          // Fetch and convert the image
+          const response = await fetch(currentTileImageUrl);
+          const blob = await response.blob();
+          
+          // Create a temporary canvas to compress the image
+          const img = new Image();
+          img.src = URL.createObjectURL(blob);
+          await new Promise((resolve) => {
+            img.onload = resolve;
+          });
+          
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800; // Maximum width for the image
+          const scale = Math.min(1, MAX_WIDTH / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          // Convert to base64 with compression
+          selectedTileImage = canvas.toDataURL('image/jpeg', 0.6); // 60% quality
+          console.log("Selected tile image captured and compressed successfully");
+          
+          // Clean up
+          URL.revokeObjectURL(img.src);
+        } catch (error) {
+          console.error("Error capturing selected tile image:", error);
+          alert("Error capturing tile image. Please try again.");
+          return;
+        }
+      } else {
+        console.error("No tile image selected");
+        alert("Please select a tile pattern first.");
+        return;
+      }
 
       // Prepare request data with only essential fields
       const requestData = {
@@ -107,11 +152,14 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         phoneNumber: data.phone,
         referenceNumber: data.reference || "N/A",
         tileQuantity: data.quantity,
-        tileSize: data.tileSize
+        tileSize: data.tileSize,
+        image: selectedTileImage, // Add the compressed image
+        tileName: tileConfig?.tile?.name || "N/A",
+        tileColor: tileConfig?.tile?.color || tileConfig?.color || "N/A"
       };
 
       // Send data to API
-      const response = await fetch("/api/tilesubmissions", {
+      const response = await fetch("http://localhost:5000/api/tile-submissions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -137,24 +185,20 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       const result = await response.json();
       console.log("Success:", result);
       
-      // Create download link for PDF
+      // Download PDF
       const blobUrl = URL.createObjectURL(pdfBlob);
       const downloadLink = document.createElement("a");
       downloadLink.href = blobUrl;
-      downloadLink.download = "tile-configuration.pdf";
+      downloadLink.download = `tile-configuration-${Date.now()}.pdf`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
-
-      // Cleanup
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(blobUrl);
 
-      alert("Form submitted successfully and PDF downloaded!");
+      alert("Form submitted successfully!");
       
-      // Reset form and close modal on success
+      // Reset form but don't close modal
       reset();
-      setIsFormOpen(false);
-      onClose();
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("Something went wrong. Please try again.");
@@ -289,7 +333,10 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
     canvas.width = 800;
     canvas.height = 800;
 
-    drawTilesOnCanvas(canvas, ctx);
+    // Draw tiles on canvas
+    drawTilesOnCanvas(canvas, ctx).catch(error => {
+      console.error("Error drawing tiles:", error);
+    });
   }, [tileConfig]);
 
   const tileSizes = [
@@ -301,12 +348,50 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
   // Add this function before generatePDF
   const ensureCanvasDrawn = async (canvas) => {
-    return new Promise((resolve) => {
-      if (canvas.getContext("2d").getImageData(0, 0, 1, 1).data[3] !== 0) {
-        resolve();
-      } else {
-        setTimeout(() => ensureCanvasDrawn(canvas), 100);
-      }
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds maximum wait time
+
+      const checkCanvas = () => {
+        try {
+          if (!canvas) {
+            console.error("Canvas is null in checkCanvas");
+            reject(new Error("Canvas is null"));
+            return;
+          }
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            console.error("Canvas context is null");
+            reject(new Error("Canvas context is null"));
+            return;
+          }
+
+          const imageData = ctx.getImageData(0, 0, 1, 1);
+          
+          // Check if canvas has content
+          if (imageData.data[3] !== 0) {
+            console.log("Canvas is drawn");
+            resolve();
+            return;
+          }
+
+          attempts++;
+          if (attempts >= maxAttempts) {
+            console.error("Canvas drawing timeout");
+            reject(new Error("Canvas drawing timeout"));
+            return;
+          }
+
+          // Try again after a short delay
+          setTimeout(checkCanvas, 100);
+        } catch (error) {
+          console.error("Error checking canvas:", error);
+          reject(error);
+        }
+      };
+
+      checkCanvas();
     });
   };
 
@@ -376,7 +461,7 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
       pdf.setFontSize(16);
       pdf.setTextColor(0, 0, 0);
       pdf.text("Tile Information", margin, yPosition);
-      yPosition += 10;
+      yPosition += 10; 
 
       pdf.setFontSize(12);
       pdf.setTextColor(51, 51, 51);
@@ -397,22 +482,125 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
 
       yPosition += 10;
 
-      // Additional Information Section
-      if (formData.message) {
-        pdf.setFontSize(16);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text("Additional Information", margin, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(12);
-        pdf.setTextColor(51, 51, 51);
-        const messageLines = pdf.splitTextToSize(formData.message, pageWidth - margin * 2);
-        pdf.text(messageLines, margin, yPosition);
-        yPosition += messageLines.length * 8;
+      // Check if we need a new page before adding images
+      if (yPosition > pageHeight - 150) {
+        pdf.addPage();
+        yPosition = 20;
       }
 
-      // Thank You Section
-      if (yPosition < pageHeight - 50) {
+      // Capture and add the tile pattern with environment
+      try {
+        // Create a temporary container for the tile pattern
+        const tempContainer = document.createElement('div');
+        tempContainer.style.width = '80px';
+        tempContainer.style.height = '80px';
+        tempContainer.style.position = 'relative';
+        tempContainer.style.overflow = 'hidden';
+        tempContainer.style.backgroundColor = tileConfig?.groutColor || '#333333';
+        document.body.appendChild(tempContainer);
+
+        // Add a single tile
+        const tile = document.createElement('div');
+        tile.style.position = 'relative';
+        tile.style.width = '100%';
+        tile.style.height = '100%';
+        tile.style.backgroundColor = 'white';
+        tempContainer.appendChild(tile);
+
+        // Add tile image if available
+        if (tileConfig?.tile?.image) {
+          const img = document.createElement('img');
+          img.src = tileConfig.tile.image;
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.objectFit = 'cover';
+          img.style.opacity = '0.8';
+          tile.appendChild(img);
+        }
+
+        // Capture the tile pattern
+        const tilePatternCanvas = await html2canvas(tempContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null
+        });
+
+        // Clean up
+        document.body.removeChild(tempContainer);
+
+        // Calculate center positions for both images
+        const totalWidth = pageWidth - (margin * 2);
+        const patternWidth = 80;
+        const envWidth = 80;
+        const gap = 20; // Gap between images
+        const totalImagesWidth = patternWidth + envWidth + gap;
+        const startX = (totalWidth - totalImagesWidth) / 2 + margin;
+
+        // Add tile pattern to PDF
+        pdf.setFontSize(14);
+        pdf.text("Tile Pattern", startX + (patternWidth / 2), yPosition, { align: "center" });
+        pdf.text("Tile Environment", startX + patternWidth + gap + (envWidth / 2), yPosition, { align: "center" });
+        yPosition += 10;
+
+        const tilePatternImage = tilePatternCanvas.toDataURL('image/png');
+        pdf.addImage(tilePatternImage, 'PNG', startX, yPosition, 80, 80);
+
+        // Add environment image side by side
+        if (tileConfig?.environment?.image) {
+          // Create a temporary container for the environment
+          const envContainer = document.createElement('div');
+          envContainer.style.width = '80px';
+          envContainer.style.height = '80px';
+          envContainer.style.position = 'relative';
+          envContainer.style.overflow = 'hidden';
+          document.body.appendChild(envContainer);
+
+          // Add environment image
+          const envImg = document.createElement('img');
+          envImg.src = tileConfig.environment.image;
+          envImg.style.width = '100%';
+          envImg.style.height = '100%';
+          envImg.style.objectFit = 'cover';
+          envContainer.appendChild(envImg);
+
+          // Capture the environment
+          const envCanvas = await html2canvas(envContainer, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null
+          });
+
+          // Clean up
+          document.body.removeChild(envContainer);
+
+          const environmentImage = envCanvas.toDataURL('image/png');
+          pdf.addImage(environmentImage, 'PNG', startX + patternWidth + gap, yPosition, 80, 80);
+        }
+        yPosition += 90; // Adjusted spacing after both images
+
+        // Check if we need a new page before thank you section
+        if (yPosition > pageHeight - 100) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        // Additional Information Section
+        if (formData.message) {
+          pdf.setFontSize(16);
+          pdf.setTextColor(0, 0, 0);
+          pdf.text("Additional Information", margin, yPosition);
+          yPosition += 10;
+
+          pdf.setFontSize(12);
+          pdf.setTextColor(51, 51, 51);
+          const messageLines = pdf.splitTextToSize(formData.message, pageWidth - margin * 2);
+          pdf.text(messageLines, margin, yPosition);
+          yPosition += messageLines.length * 8;
+        }
+
+        // Thank You Section
         pdf.setFontSize(16);
         pdf.setTextColor(139, 0, 0);
         pdf.text("Thank You!", pageWidth / 2, yPosition, {
@@ -442,6 +630,9 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
         pdf.text("Phone: 214-352-0000", pageWidth / 2, yPosition, {
           align: "center",
         });
+
+      } catch (error) {
+        console.error("Error capturing images:", error);
       }
 
       return pdf;
@@ -663,9 +854,9 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                       <div
                         className="grid bg-white"
                         style={{
-                          gridTemplateColumns: `repeat(${tileConfig?.size === "8x8" ? 8 : 12}, minmax(0, 1fr))`,
-                          gridTemplateRows: "repeat(8, minmax(0, 1fr))",
-                          gap: "0px",
+                          gridTemplateColumns: `repeat(${tileConfig?.size === "8x8" ? 8 : 12}, 1fr)`,
+                          gridTemplateRows: `repeat(${tileConfig?.size === "8x8" ? 8 : 12}, 1fr)`,
+                          gap: "0",
                           width: "100%",
                           height: "100%",
                           backgroundColor: tileConfig?.groutColor || "#333333",
@@ -674,56 +865,59 @@ export default function TileModals({ isOpen, onClose, tileConfig }) {
                           maxWidth: "100%",
                           maxHeight: "100%",
                           margin: "auto",
+                          display: "grid",
+                          gridGap: "0",
+                          padding: "0",
+                          boxShadow: "none",
                         }}
                       >
-                        {Array.from({ length: (tileConfig?.size === "8x8" ? 8 : 12) * 8 }).map((_, index) => {
-                          const patternIndex = (index % 2) + 2 * (Math.floor(index / (tileConfig?.size === "8x8" ? 8 : 12)) % 2);
-                          return (
-                            <div
-                              key={index}
-                              className="relative bg-white"
-                              style={{
-                                width: "100%",
-                                aspectRatio: "1 / 1",
-                                overflow: "hidden",
-                              }}
-                            >
-                              {tileConfig?.tile?.image && (
-                                <img
-                                  src={tileConfig.tile.image}
-                                  alt={`Tile Block ${index + 1}`}
-                                  className="absolute inset-0 w-full h-full object-cover"
-                                  style={{
-                                    transform: `scale(2)`,
-                                    transformOrigin: `${index % 2 === 0 ? "0" : "100%"} ${index < (tileConfig?.size === "8x8" ? 8 : 12) ? "0" : "100%"}`,
-                                    opacity: 0.8,
-                                  }}
-                                />
-                              )}
-                              {tileConfig?.tile?.masks?.map((mask) => (
-                                <div
-                                  key={mask.id}
-                                  className="absolute inset-0"
-                                  style={{
-                                    backgroundColor: mask.color,
-                                    maskImage: mask.image ? `url(${mask.image})` : "none",
-                                    WebkitMaskImage: mask.image ? `url(${mask.image})` : "none",
-                                    maskSize: "cover",
-                                    WebkitMaskSize: "cover",
-                                    maskPosition: "center",
-                                    WebkitMaskPosition: "center",
-                                    maskRepeat: "no-repeat",
-                                    WebkitMaskRepeat: "no-repeat",
-                                    transform: `scale(2)`,
-                                    transformOrigin: `${index % 2 === 0 ? "0" : "100%"} ${index < (tileConfig?.size === "8x8" ? 8 : 12) ? "0" : "100%"}`,
-                                    opacity: 0.8,
-                                    zIndex: 1,
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          );
-                        })}
+                        {Array.from({ length: tileConfig?.size === "8x8" ? 64 : 144 }).map((_, index) => (
+                          <div
+                            key={index}
+                            className="relative bg-white"
+                            style={{
+                              aspectRatio: "1 / 1",
+                              transform: `rotate(${index % 2 === 0 ? "0deg" : "180deg"})`,
+                              boxShadow: "none",
+                            }}
+                          >
+                            {tileConfig?.tile?.image && (
+                              <img
+                                src={tileConfig.tile.image}
+                                alt={`Tile Block ${index + 1}`}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                style={{
+                                  transform: `scale(2)`,
+                                  transformOrigin: `${index % 2 === 0 ? "0" : "100%"} ${index < (tileConfig?.size === "8x8" ? 8 : 12) ? "0" : "100%"}`,
+                                  opacity: 0.8,
+                                  boxShadow: "none",
+                                }}
+                              />
+                            )}
+                            {tileConfig?.tile?.masks?.map((mask) => (
+                              <div
+                                key={mask.id}
+                                className="absolute inset-0"
+                                style={{
+                                  backgroundColor: mask.color,
+                                  maskImage: mask.image ? `url(${mask.image})` : "none",
+                                  WebkitMaskImage: mask.image ? `url(${mask.image})` : "none",
+                                  maskSize: "cover",
+                                  WebkitMaskSize: "50px",
+                                  maskPosition: "center",
+                                  WebkitMaskPosition: "center",
+                                  maskRepeat: "no-repeat",
+                                  WebkitMaskRepeat: "no-repeat",
+                                  transform: `scale(2)`,
+                                  transformOrigin: `${index % 2 === 0 ? "0" : "100%"} ${index < (tileConfig?.size === "8x8" ? 8 : 12) ? "0" : "100%"}`,
+                                  opacity: 0.8,
+                                  zIndex: 1,
+                                  boxShadow: "none",
+                                }}
+                              />
+                            ))}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>

@@ -1,18 +1,11 @@
-import scrollbar from "tailwind-scrollbar";
-
+/** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./src/**/*.{js,jsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
-    extend: {
-      fontFamily: {
-        poppins: ["Poppins", "sans-serif"],
-      },
-      maxWidth: {
-        "7xl": "80rem",
-        "8xl": "88rem",
-        "9xl": "100rem",
-      },
-    },
+    extend: {},
   },
-  plugins: [scrollbar],
-};
+  plugins: [],
+} 

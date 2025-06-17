@@ -26,6 +26,7 @@ const TileSelector = ({ onSelectTile }) => {
     tileCollections,
     selectedCategory,
     setSelectedCategory,
+    categories,
     setSelectedBorder,
     selectedSize,
     setSelectedSize,
@@ -86,12 +87,16 @@ const TileSelector = ({ onSelectTile }) => {
         <div className="w-full rounded-lg">
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full p-2  rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 font-poppins text-sm"
+            onChange={(e) => {
+              console.log('Selected category ID:', e.target.value);
+              setSelectedCategory(e.target.value);
+            }}
+            className="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 font-poppins text-sm"
           >
-            {Object.keys(tileCollections).map((collection) => (
-              <option key={collection} value={collection}>
-                {collection}
+            <option value="">Select a category</option>
+            {categories.map((category) => (
+              <option key={category._id} value={category._id}>
+                {category.name}
               </option>
             ))}
           </select>
@@ -99,23 +104,42 @@ const TileSelector = ({ onSelectTile }) => {
 
         <div className="mt-2">
           <h3 className="font-poppins">Select Tile Pattern</h3>
-          <div className="grid grid-cols-4 gap-2 flex-1  overflow-x-auto custom-scrollbar mt-2">
-            {tileCollections[selectedCategory]?.map((tile) => (
-              <div
-                key={tile.id}
-                className="relative aspect-square group cursor-pointer bg-gray-200 p-2 rounded-sm"
-                onClick={() => handleTileClick(tile)}
-              >
-                <img
-                  src={tile.image}
-                  alt={tile.name}
-                  className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105"
-                />
-                <div className="mt-1 text-center text-xs font-medium text-gray-700">
-                  {tile.name}
-                </div>
+          <div className="w-[512px] overflow-x-auto gap-2 mt-2 pb-2 custom-scrollbar">
+            {selectedCategory ? (
+              <>
+                {console.log('Selected Category:', selectedCategory)}
+                {console.log('Available Categories:', Object.keys(tileCollections))}
+                {console.log('Tiles in selected category:', tileCollections[selectedCategory])}
+                {tileCollections[selectedCategory]?.length > 0 ? (
+                  <div className="flex gap-2">
+                    {tileCollections[selectedCategory].map((tile) => (
+                      <div
+                        key={tile.id}
+                        className="flex-none w-[120px] relative aspect-square group cursor-pointer bg-gray-200 p-2 rounded-sm"
+                        onClick={() => handleTileClick(tile)}
+                      >
+                        <img
+                          src={tile.image}
+                          alt={tile.name}
+                          className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105"
+                        />
+                        <div className="mt-1 text-center text-xs font-medium text-gray-700">
+                          {tile.name}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    No tiles found in this category. Please check if tiles are assigned to this category.
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                Please select a category to view tiles
               </div>
-            ))}
+            )}
           </div>
         </div>
 
